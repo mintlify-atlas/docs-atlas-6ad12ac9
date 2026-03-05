@@ -1,0 +1,100 @@
+{
+  "projectType": "saas",
+  "projectName": "VIP2CARS",
+  "projectDescription": "Professional automotive client and vehicle management system built with Laravel 12, Livewire, and Flux UI",
+  "theme": "almond",
+  "primaryColor": "#1E40AF",
+  "lightColor": "#3B82F6",
+  "darkColor": "#1E3A8A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/client-management",
+              "features/vehicle-management",
+              "features/authentication",
+              "features/dashboard"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guides/managing-clients",
+              "guides/managing-vehicles",
+              "guides/user-accounts"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deployment/requirements",
+              "deployment/configuration",
+              "deployment/production"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": [
+              "development/architecture",
+              "development/database-schema",
+              "development/technology-stack"
+            ]
+          },
+          {
+            "group": "Models & Controllers",
+            "pages": [
+              "development/models/cliente",
+              "development/models/vehiculo",
+              "development/controllers"
+            ]
+          },
+          {
+            "group": "Extension",
+            "pages": [
+              "development/extending",
+              "development/testing",
+              "development/contributing"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Complete CRUD operations for clients and vehicles",
+    "User authentication with Laravel Fortify",
+    "Modern Flux UI components with Tailwind v4",
+    "Relationship management between clients and vehicles",
+    "Data validation and security middleware",
+    "Dashboard with system overview"
+  ],
+  "publicApiSurface": [
+    "ClienteController::index() - List all clients",
+    "ClienteController::store() - Create new client",
+    "ClienteController::update() - Update client",
+    "ClienteController::destroy() - Delete client",
+    "VehiculoController::index() - List all vehicles",
+    "VehiculoController::store() - Create new vehicle",
+    "VehiculoController::update() - Update vehicle",
+    "VehiculoController::destroy() - Delete vehicle",
+    "Cliente::vehiculos() - Get client's vehicles relationship",
+    "Vehiculo::cliente() - Get vehicle's client relationship"
+  ]
+}
