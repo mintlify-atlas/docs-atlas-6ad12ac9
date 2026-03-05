@@ -1,0 +1,285 @@
+---
+title: Vehicle Management
+description: Complete guide to managing vehicles in VIP2CARS with CRUD operations, client relationships, and validation rules.
+---
+
+The vehicle management system enables tracking of automotive records associated with clients. Each vehicle belongs to a single client and includes details like license plate, make, model, and manufacturing year.
+
+## Overview
+
+Vehicles are managed through the `VehiculoController` located at `app/Http/Controllers/VehiculoController.php:7`. The system uses the `Vehiculo` model with a custom primary key `id_vehiculo` and stores data in the `vehiculos` table.
+
+## Model Structure
+
+The `Vehiculo` model includes the following fields:
+
+<CardGroup cols={2}>
+  <Card title="placa" icon="id-badge">
+    License plate number - Required, unique, string
+  </Card>
+  <Card title="marca" icon="car">
+    Vehicle brand/make - Required, string, max 255 characters
+  </Card>
+  <Card title="modelo" icon="car-side">
+    Vehicle model - Required, string, max 255 characters
+  </Card>
+  <Card title="anio_fabricacion" icon="calendar">
+    Manufacturing year - Required, numeric, exactly 4 digits
+  </Card>
+  <Card title="id_cliente" icon="user">
+    Foreign key to cliente - Required, must exist in clientes table
+  </Card>
+  <Card title="id_vehiculo" icon="key">
+    Primary key - Auto-generated
+  </Card>
+</CardGroup>
+
+## CRUD Operations
+
+### Listing Vehicles
+
+Retrieve all vehicles with their associated client information.
+
+**Route:** `GET /vehiculos`
+
+**Controller Method:** `VehiculoController::index()` at line 12
+
+```php
+public function index()
+{
+    $vehiculos = \App\Models\Vehiculo::with('cliente')->get();
+    return view('vehiculos.index', compact('vehiculos'));
+}
+```
+
+<Note>
+  The `with('cliente')` method eager loads the client relationship to prevent N+1 query problems when displaying vehicle lists.
+</Note>
+
+### Creating a Vehicle
+
+<Accordion title="Create Form">
+  **Route:** `GET /vehiculos/create`
+  
+  **Controller Method:** `VehiculoController::create()` at line 18
+  
+  Displays the vehicle creation form with a dropdown list of all available clients.
+  
+  ```php
+  public function create()
+  {
+      $clientes = \App\Models\Cliente::all();
+      return view('vehiculos.create', compact('clientes'));
+  }
+  ```
+</Accordion>
+
+<Accordion title="Store Vehicle">
+  **Route:** `POST /vehiculos`
+  
+  **Controller Method:** `VehiculoController::store()` at line 24
+  
+  Validates and stores a new vehicle in the database.
+  
+  ```php
+  $data = $request->validate([
+      'placa' => 'required|string|unique:vehiculos,placa',
+      'marca' => 'required|string|max:255',
+      'modelo' => 'required|string|max:255',
+      'anio_fabricacion' => 'required|numeric|digits:4',
+      'id_cliente' => 'required|exists:clientes,id_cliente',
+  ]);
+  ```
+  
+  **Success Response:** Redirects to `vehiculos.index` with success message "Vehículo creado correctamente."
+</Accordion>
+
+### Viewing a Vehicle
+
+**Route:** `GET /vehiculos/{id}`
+
+**Controller Method:** `VehiculoController::show()` at line 39
+
+```php
+public function show(string $id)
+{
+    $vehiculo = \App\Models\Vehiculo::with('cliente')->findOrFail($id);
+    return view('vehiculos.show', compact('vehiculo'));
+}
+```
+
+<Note>
+  The client relationship is eager loaded to display owner information on the vehicle detail page.
+</Note>
+
+### Updating a Vehicle
+
+<Accordion title="Edit Form">
+  **Route:** `GET /vehiculos/{id}/edit`
+  
+  **Controller Method:** `VehiculoController::edit()` at line 45
+  
+  Displays the vehicle edit form pre-filled with existing data and a dropdown of available clients.
+  
+  ```php
+  public function edit(string $id)
+  {
+      $vehiculo = \App\Models\Vehiculo::findOrFail($id);
+      $clientes = \App\Models\Cliente::all();
+      return view('vehiculos.edit', compact('vehiculo', 'clientes'));
+  }
+  ```
+</Accordion>
+
+<Accordion title="Update Vehicle">
+  **Route:** `PUT/PATCH /vehiculos/{id}`
+  
+  **Controller Method:** `VehiculoController::update()` at line 52
+  
+  Validates and updates an existing vehicle record.
+  
+  ```php
+  $data = $request->validate([
+      'placa' => 'required|string|unique:vehiculos,placa,'.$id.',id_vehiculo',
+      'marca' => 'required|string|max:255',
+      'modelo' => 'required|string|max:255',
+      'anio_fabricacion' => 'required|numeric|digits:4',
+      'id_cliente' => 'required|exists:clientes,id_cliente',
+  ]);
+  ```
+  
+  <Warning>
+    The unique validation for `placa` excludes the current vehicle ID to allow updating the same record without triggering uniqueness errors.
+  </Warning>
+  
+  **Success Response:** Redirects to `vehiculos.index` with success message "Vehículo actualizado correctamente."
+</Accordion>
+
+### Deleting a Vehicle
+
+**Route:** `DELETE /vehiculos/{id}`
+
+**Controller Method:** `VehiculoController::destroy()` at line 69
+
+```php
+public function destroy(string $id)
+{
+    $vehiculo = \App\Models\Vehiculo::findOrFail($id);
+    $vehiculo->delete();
+    
+    return redirect()->route('vehiculos.index')
+        ->with('success', 'Vehículo eliminado correctamente.');
+}
+```
+
+## Relationships
+
+The `Vehiculo` model has a many-to-one relationship with clients defined at `app/Models/Vehiculo.php:20`:
+
+```php
+public function cliente()
+{
+    return $this->belongsTo(Cliente::class, 'id_cliente', 'id_cliente');
+}
+```
+
+This means:
+- Each vehicle belongs to exactly one client
+- Access a vehicle's owner using `$vehiculo->cliente`
+- The relationship is keyed by `id_cliente` on both tables
+- The foreign key constraint ensures referential integrity
+
+## Validation Rules
+
+### On Create
+
+| Field | Rules | Description |
+|-------|-------|-------------|
+| `placa` | required, string, unique:vehiculos,placa | Unique license plate number |
+| `marca` | required, string, max:255 | Vehicle make/brand |
+| `modelo` | required, string, max:255 | Vehicle model |
+| `anio_fabricacion` | required, numeric, digits:4 | 4-digit manufacturing year (e.g., 2024) |
+| `id_cliente` | required, exists:clientes,id_cliente | Must reference an existing client |
+
+### On Update
+
+<Note>
+  Update validation is identical to create validation, except the unique rule for `placa` excludes the current record:
+  - `unique:vehiculos,placa,{id},id_vehiculo`
+</Note>
+
+### Manufacturing Year Validation
+
+The `digits:4` rule ensures:
+- Exactly 4 numeric characters
+- Valid examples: 2024, 1998, 2015
+- Invalid examples: 24 (too short), 20245 (too long), 202A (not numeric)
+
+<Warning>
+  The system does not validate whether the year is reasonable (e.g., not in the future or too far in the past). Consider adding custom validation rules if needed.
+</Warning>
+
+## Foreign Key Constraint
+
+The `exists:clientes,id_cliente` validation ensures data integrity:
+
+```php
+'id_cliente' => 'required|exists:clientes,id_cliente'
+```
+
+This validation:
+- Checks that the provided client ID exists in the `clientes` table
+- Prevents orphaned vehicle records
+- Returns a validation error if the client doesn't exist
+
+## Route Protection
+
+All vehicle management routes are protected by middleware defined in `routes/web.php:12`:
+
+```php
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('vehiculos', VehiculoController::class);
+});
+```
+
+<Warning>
+  Users must be authenticated AND have verified their email address to access vehicle management features.
+</Warning>
+
+## RESTful Resource Routes
+
+The `Route::resource()` declaration automatically creates these routes:
+
+| Method | URI | Action | Route Name |
+|--------|-----|--------|------------|
+| GET | /vehiculos | index | vehiculos.index |
+| GET | /vehiculos/create | create | vehiculos.create |
+| POST | /vehiculos | store | vehiculos.store |
+| GET | /vehiculos/{id} | show | vehiculos.show |
+| GET | /vehiculos/{id}/edit | edit | vehiculos.edit |
+| PUT/PATCH | /vehiculos/{id} | update | vehiculos.update |
+| DELETE | /vehiculos/{id} | destroy | vehiculos.destroy |
+
+## Eager Loading Performance
+
+<Note>
+  The controller uses eager loading (`with('cliente')`) in the `index()` and `show()` methods to optimize database queries and prevent N+1 query problems.
+</Note>
+
+**Without Eager Loading:**
+```php
+// Results in N+1 queries (1 for vehicles + N for each client)
+$vehiculos = Vehiculo::all();
+foreach ($vehiculos as $vehiculo) {
+    echo $vehiculo->cliente->nombres; // Separate query for each iteration
+}
+```
+
+**With Eager Loading:**
+```php
+// Results in only 2 queries (1 for vehicles + 1 for all clients)
+$vehiculos = Vehiculo::with('cliente')->get();
+foreach ($vehiculos as $vehiculo) {
+    echo $vehiculo->cliente->nombres; // No additional queries
+}
+```

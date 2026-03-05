@@ -1,0 +1,353 @@
+---
+title: Authentication
+description: Complete authentication system powered by Laravel Fortify with registration, login, email verification, password reset, and two-factor authentication.
+---
+
+VIP2CARS uses Laravel Fortify to handle authentication, providing a robust and secure authentication backend without the need for views or frontend scaffolding included in the package.
+
+## Overview
+
+The authentication system is configured in `config/fortify.php:5` and includes:
+- User registration
+- Login with rate limiting
+- Email verification
+- Password reset
+- Two-factor authentication (2FA)
+- Profile management
+
+## Fortify Configuration
+
+### Authentication Guard
+
+The system uses the standard web guard defined at `config/fortify.php:18`:
+
+```php
+'guard' => 'web',
+```
+
+### Username Field
+
+Authentication is performed using email addresses:
+
+```php
+'username' => 'email',
+'email' => 'email',
+'lowercase_usernames' => true,
+```
+
+<Note>
+  Usernames (email addresses) are automatically converted to lowercase before storage to ensure consistency.
+</Note>
+
+### Home Path
+
+After successful authentication, users are redirected to the dashboard:
+
+```php
+'home' => '/dashboard',
+```
+
+## User Model
+
+The `User` model is located at `app/Models/User.php:12` and extends Laravel's `Authenticatable` class.
+
+### Traits
+
+```php
+use HasFactory, Notifiable, TwoFactorAuthenticatable;
+```
+
+- **HasFactory**: Enables model factories for testing
+- **Notifiable**: Allows sending notifications to users
+- **TwoFactorAuthenticatable**: Adds two-factor authentication capabilities
+
+### Fillable Fields
+
+```php
+protected $fillable = [
+    'name',
+    'email',
+    'password',
+];
+```
+
+### Hidden Fields
+
+Sensitive data hidden from serialization:
+
+```php
+protected $hidden = [
+    'password',
+    'two_factor_secret',
+    'two_factor_recovery_codes',
+    'remember_token',
+];
+```
+
+<Warning>
+  These fields are automatically hidden when converting the user model to JSON or arrays to prevent sensitive data exposure.
+</Warning>
+
+### Field Casting
+
+```php
+protected function casts(): array
+{
+    return [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+}
+```
+
+## Authentication Features
+
+### Registration
+
+User registration is enabled in `config/fortify.php:147`:
+
+```php
+Features::registration(),
+```
+
+**Required Fields:**
+- Name (string)
+- Email (unique, valid email format)
+- Password (hashed automatically)
+
+<Note>
+  New users must verify their email address before accessing protected routes due to the `verified` middleware.
+</Note>
+
+### Login
+
+Login functionality with rate limiting:
+
+```php
+'limiters' => [
+    'login' => 'login',
+    'two-factor' => 'two-factor',
+],
+```
+
+**Rate Limiting:** The default Fortify configuration throttles login attempts to 5 requests per minute per email and IP address combination.
+
+<Warning>
+  Excessive failed login attempts will result in temporary account lockout to prevent brute force attacks.
+</Warning>
+
+### Email Verification
+
+Email verification is required and enabled at `config/fortify.php:149`:
+
+```php
+Features::emailVerification(),
+```
+
+**Protected Routes:** Routes using the `verified` middleware (like `/dashboard`, `/clientes`, `/vehiculos`) require email verification:
+
+```php
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::resource('clientes', ClienteController::class);
+    Route::resource('vehiculos', VehiculoController::class);
+});
+```
+
+### Password Reset
+
+Password reset functionality is enabled at `config/fortify.php:148`:
+
+```php
+Features::resetPasswords(),
+```
+
+**Configuration:**
+```php
+'passwords' => 'users',
+```
+
+The password broker named `users` handles password reset tokens and notifications.
+
+<Accordion title="Password Reset Flow">
+  1. User requests password reset via email
+  2. System sends reset link to registered email
+  3. User clicks link and provides new password
+  4. Password is hashed and updated in database
+  5. User is redirected to dashboard upon success
+</Accordion>
+
+### Two-Factor Authentication
+
+Two-factor authentication (2FA) is enabled with password confirmation at `config/fortify.php:150`:
+
+```php
+Features::twoFactorAuthentication([
+    'confirm' => true,
+    'confirmPassword' => true,
+]),
+```
+
+**Configuration Options:**
+- **confirm**: Requires user confirmation to enable 2FA
+- **confirmPassword**: Requires password confirmation before managing 2FA settings
+
+**User Model Support:** The `TwoFactorAuthenticatable` trait at `app/Models/User.php:15` provides:
+- QR code generation
+- Recovery code management
+- 2FA challenge handling
+
+<Note>
+  Recovery codes are automatically generated when enabling 2FA and should be stored securely by the user.
+</Note>
+
+## Middleware Protection
+
+### Authentication Middleware
+
+The `auth` middleware ensures users are logged in:
+
+```php
+Route::middleware(['auth'])->group(function () {
+    Route::redirect('settings', 'settings/profile');
+    Route::livewire('settings/profile', 'pages::settings.profile')->name('profile.edit');
+});
+```
+
+### Verification Middleware
+
+The `verified` middleware ensures email addresses are verified:
+
+```php
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Protected routes here
+});
+```
+
+<Warning>
+  Attempting to access routes protected by the `verified` middleware without email verification will redirect users to an email verification notice.
+</Warning>
+
+## Profile Management
+
+Profile management routes are defined in `routes/settings.php:6`:
+
+### Profile Settings
+
+**Route:** `/settings/profile`
+
+**Middleware:** `auth`
+
+**Description:** Edit user profile information (name, email)
+
+### Password Management
+
+**Route:** `/settings/password`
+
+**Middleware:** `auth`, `verified`
+
+**Description:** Change user password
+
+### Two-Factor Authentication
+
+**Route:** `/settings/two-factor`
+
+**Middleware:** `auth`, `verified`, `password.confirm` (conditional)
+
+**Description:** Enable, disable, and manage 2FA settings
+
+```php
+Route::livewire('settings/two-factor', 'pages::settings.two-factor')
+    ->middleware(
+        when(
+            Features::canManageTwoFactorAuthentication()
+            && Features::optionEnabled(Features::twoFactorAuthentication(), 'confirmPassword'),
+            ['password.confirm'],
+            [],
+        ),
+    )
+    ->name('two-factor.show');
+```
+
+<Note>
+  Password confirmation is conditionally applied based on the Fortify configuration.
+</Note>
+
+### Appearance Settings
+
+**Route:** `/settings/appearance`
+
+**Middleware:** `auth`, `verified`
+
+**Description:** Customize UI preferences (likely theme, display options)
+
+## User Utility Methods
+
+The User model includes a custom `initials()` method at `app/Models/User.php:56`:
+
+```php
+public function initials(): string
+{
+    return Str::of($this->name)
+        ->explode(' ')
+        ->take(2)
+        ->map(fn ($word) => Str::substr($word, 0, 1))
+        ->implode('');
+}
+```
+
+**Usage:**
+```php
+$user = Auth::user();
+echo $user->initials(); // Returns "JD" for "John Doe"
+```
+
+This method is typically used for displaying user avatars or profile badges in the UI.
+
+## Security Features
+
+<CardGroup cols={2}>
+  <Card title="Password Hashing" icon="lock">
+    Passwords are automatically hashed using Laravel's secure hashing via the `hashed` cast
+  </Card>
+  <Card title="Rate Limiting" icon="shield">
+    Login attempts are throttled to 5 per minute per email/IP combination
+  </Card>
+  <Card title="Email Verification" icon="envelope-circle-check">
+    Required for accessing sensitive features and data
+  </Card>
+  <Card title="Two-Factor Auth" icon="mobile">
+    Optional additional security layer with TOTP authentication
+  </Card>
+  <Card title="CSRF Protection" icon="shield-halved">
+    All forms protected by Laravel's CSRF middleware
+  </Card>
+  <Card title="Remember Token" icon="clock-rotate-left">
+    Secure persistent login sessions with token rotation
+  </Card>
+</CardGroup>
+
+## Fortify Routes
+
+Fortify automatically registers the following routes with the `web` middleware:
+
+| Method | URI | Description |
+|--------|-----|-------------|
+| GET | /login | Display login form |
+| POST | /login | Process login |
+| POST | /logout | Logout user |
+| GET | /register | Display registration form |
+| POST | /register | Process registration |
+| GET | /email/verify | Email verification notice |
+| GET | /email/verify/{id}/{hash} | Verify email address |
+| POST | /email/verification-notification | Resend verification email |
+| GET | /forgot-password | Display forgot password form |
+| POST | /forgot-password | Send password reset link |
+| GET | /reset-password/{token} | Display reset password form |
+| POST | /reset-password | Process password reset |
+| GET | /two-factor-challenge | Display 2FA challenge |
+| POST | /two-factor-challenge | Verify 2FA code |
+
+<Note>
+  All Fortify routes use the prefix and middleware defined in `config/fortify.php:89` and `config/fortify.php:104`.
+</Note>

@@ -1,0 +1,271 @@
+---
+title: Dashboard
+description: Overview of the VIP2CARS dashboard interface, navigation structure, and protected routes.
+---
+
+The dashboard serves as the main landing page after authentication, providing navigation to all core features of the VIP2CARS system including client management, vehicle management, and system settings.
+
+## Overview
+
+The dashboard is located at `resources/views/dashboard.blade.php:1` and is accessible via the `/dashboard` route. It serves as the central hub for authenticated users to access all system features.
+
+## Route Configuration
+
+**Route:** `GET /dashboard`
+
+**Route Name:** `dashboard`
+
+**Middleware:** `auth`, `verified`
+
+**Defined in:** `routes/web.php:13`
+
+```php
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::resource('clientes', ClienteController::class);
+    Route::resource('vehiculos', VehiculoController::class);
+});
+```
+
+<Warning>
+  The dashboard requires both authentication and email verification. Users who have not verified their email will be redirected to the email verification notice.
+</Warning>
+
+## Dashboard Layout
+
+The dashboard uses a responsive grid layout with placeholder sections for future content:
+
+```blade
+<x-layouts::app :title="__('Dashboard')">
+    <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl">
+        <div class="grid auto-rows-min gap-4 md:grid-cols-3">
+            <!-- Three card sections -->
+        </div>
+        <div class="relative h-full flex-1 overflow-hidden rounded-xl border">
+            <!-- Main content area -->
+        </div>
+    </div>
+</x-layouts::app>
+```
+
+### Layout Structure
+
+<CardGroup cols={2}>
+  <Card title="Header Section" icon="table-columns">
+    Three responsive cards in a grid layout on medium screens and larger
+  </Card>
+  <Card title="Main Content" icon="square">
+    Large flexible content area for primary dashboard widgets
+  </Card>
+  <Card title="Responsive Design" icon="mobile">
+    Adapts from single column on mobile to three columns on desktop
+  </Card>
+  <Card title="App Layout" icon="window-maximize">
+    Uses the application layout wrapper with navigation and settings
+  </Card>
+</CardGroup>
+
+## Navigation Structure
+
+### Primary Navigation
+
+The application layout provides access to:
+
+1. **Dashboard** - Home page (`/dashboard`)
+2. **Clientes** - Client management (`/clientes`)
+3. **Vehiculos** - Vehicle management (`/vehiculos`)
+4. **Documentación** - Documentation download (`/documentacion`)
+
+### Settings Navigation
+
+Accessible from the user profile menu:
+
+<Accordion title="Profile Settings">
+  **Route:** `/settings/profile`
+  
+  **Route Name:** `profile.edit`
+  
+  **Middleware:** `auth`
+  
+  Edit user profile information including name and email.
+</Accordion>
+
+<Accordion title="Password Management">
+  **Route:** `/settings/password`
+  
+  **Route Name:** `user-password.edit`
+  
+  **Middleware:** `auth`, `verified`
+  
+  Change user password with current password confirmation.
+</Accordion>
+
+<Accordion title="Two-Factor Authentication">
+  **Route:** `/settings/two-factor`
+  
+  **Route Name:** `two-factor.show`
+  
+  **Middleware:** `auth`, `verified`, `password.confirm` (conditional)
+  
+  Enable and manage two-factor authentication settings.
+</Accordion>
+
+<Accordion title="Appearance Settings">
+  **Route:** `/settings/appearance`
+  
+  **Route Name:** `appearance.edit`
+  
+  **Middleware:** `auth`, `verified`
+  
+  Customize UI theme and display preferences.
+</Accordion>
+
+## Protected Routes
+
+All dashboard-accessible features require authentication and email verification:
+
+```php
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::resource('clientes', ClienteController::class);
+    Route::resource('vehiculos', VehiculoController::class);
+    Route::get('documentacion', [DocumentacionController::class, 'index'])
+        ->name('documentacion.download');
+});
+```
+
+<Note>
+  The middleware stack ensures users are logged in and have verified their email before accessing any dashboard features.
+</Note>
+
+## Home Path Configuration
+
+The dashboard is configured as the home path for authenticated users in `config/fortify.php:76`:
+
+```php
+'home' => '/dashboard',
+```
+
+This means:
+- Successful login redirects to `/dashboard`
+- Successful registration (after email verification) redirects to `/dashboard`
+- Successful password reset redirects to `/dashboard`
+
+## Welcome Page
+
+Unauthenticated users see a welcome page instead:
+
+**Route:** `GET /`
+
+**Route Name:** `home`
+
+**Defined in:** `routes/web.php:10`
+
+```php
+Route::view('/', 'welcome')->name('home');
+```
+
+<Note>
+  The welcome page is publicly accessible and typically includes login/register links.
+</Note>
+
+## Dashboard Features
+
+### Visual Elements
+
+**Grid Cards:** Three aspect-ratio cards in the header section
+- Responsive grid layout (`md:grid-cols-3`)
+- Aspect ratio maintained with `aspect-video`
+- Rounded corners with `rounded-xl`
+- Border styling with `border-neutral-200 dark:border-neutral-700`
+
+**Main Content Area:** Large flexible content section
+- Full height with `h-full flex-1`
+- Overflow handling with `overflow-hidden`
+- Consistent rounded corners and borders
+
+**Pattern Backgrounds:** Decorative placeholder patterns
+```blade
+<x-placeholder-pattern class="absolute inset-0 size-full stroke-gray-900/20 dark:stroke-neutral-100/20" />
+```
+
+### Dark Mode Support
+
+The dashboard includes dark mode styling:
+- Border colors: `border-neutral-200 dark:border-neutral-700`
+- Pattern strokes: `stroke-gray-900/20 dark:stroke-neutral-100/20`
+
+## Feature Access Map
+
+From the dashboard, users can access:
+
+<CardGroup cols={2}>
+  <Card title="Client Management" icon="users" href="/features/client-management">
+    View, create, edit, and delete client records
+  </Card>
+  <Card title="Vehicle Management" icon="car" href="/features/vehicle-management">
+    Manage vehicle inventory linked to clients
+  </Card>
+  <Card title="Documentation" icon="file-arrow-down">
+    Download system documentation and reports
+  </Card>
+  <Card title="Settings" icon="gear">
+    Configure profile, password, 2FA, and appearance
+  </Card>
+</CardGroup>
+
+## Livewire Integration
+
+Settings pages use Livewire components for reactive interfaces:
+
+```php
+Route::livewire('settings/profile', 'pages::settings.profile')->name('profile.edit');
+Route::livewire('settings/password', 'pages::settings.password')->name('user-password.edit');
+Route::livewire('settings/appearance', 'pages::settings.appearance')->name('appearance.edit');
+Route::livewire('settings/two-factor', 'pages::settings.two-factor')->name('two-factor.show');
+```
+
+<Note>
+  Livewire provides a reactive, SPA-like experience without writing JavaScript.
+</Note>
+
+## Settings Route Group
+
+Settings routes are organized in a separate file at `routes/settings.php:6`:
+
+```php
+Route::middleware(['auth'])->group(function () {
+    Route::redirect('settings', 'settings/profile');
+    // Profile settings routes
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Other settings routes requiring verification
+});
+```
+
+**Root Redirect:** Accessing `/settings` automatically redirects to `/settings/profile`
+
+## Page Title
+
+The dashboard page title is set using the layout component:
+
+```blade
+<x-layouts::app :title="__('Dashboard')">
+```
+
+The `__('Dashboard')` function provides translation support for internationalization.
+
+## Future Enhancements
+
+The placeholder patterns in the dashboard suggest areas for future development:
+
+1. **Statistics Cards** - Display key metrics (total clients, total vehicles, recent activity)
+2. **Recent Activity** - Show recent client or vehicle additions/updates
+3. **Quick Actions** - Shortcuts to frequently used features
+4. **Charts and Graphs** - Visual representation of data trends
+5. **Notifications** - System alerts and user notifications
+
+<Note>
+  The current layout provides a flexible foundation for adding dashboard widgets and analytics features.
+</Note>

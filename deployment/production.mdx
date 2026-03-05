@@ -1,0 +1,632 @@
+---
+title: Production Deployment
+description: Deploy VIP2CARS to a production environment with optimization and security best practices
+---
+
+This guide covers deploying VIP2CARS to a production environment with proper optimization, security, and maintenance procedures.
+
+## Pre-Deployment Checklist
+
+Before deploying to production, ensure:
+
+- [x] Server meets all [system requirements](/deployment/requirements)
+- [x] [Environment is properly configured](/deployment/configuration)
+- [x] Database is created and credentials are set
+- [x] SSL certificate is installed (HTTPS)
+- [x] Domain DNS is configured
+
+## Initial Deployment
+
+### Step 1: Clone Repository
+
+```bash
+cd /var/www
+git clone https://github.com/farceque99/AndersonFarcequeFlores.git vip2cars
+cd vip2cars
+```
+
+<Note>
+Adjust the repository URL and destination path according to your setup.
+</Note>
+
+### Step 2: Install Dependencies
+
+<Steps>
+  <Step title="Install PHP dependencies">
+    ```bash
+    composer install --optimize-autoloader --no-dev
+    ```
+    
+    The flags optimize for production:
+    - `--optimize-autoloader`: Generates optimized autoloader for better performance
+    - `--no-dev`: Excludes development dependencies
+  </Step>
+  
+  <Step title="Install Node.js dependencies">
+    ```bash
+    npm ci
+    ```
+    
+    <Note>
+    Use `npm ci` instead of `npm install` for faster, more reliable builds in production.
+    </Note>
+  </Step>
+</Steps>
+
+### Step 3: Environment Configuration
+
+<Steps>
+  <Step title="Create environment file">
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+  
+  <Step title="Generate application key">
+    ```bash
+    php artisan key:generate
+    ```
+  </Step>
+  
+  <Step title="Edit production settings">
+    ```bash
+    nano .env
+    ```
+    
+    Ensure these production values:
+    ```bash
+    APP_ENV=production
+    APP_DEBUG=false
+    APP_URL=https://yourdomain.com
+    
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=vip2cars
+    DB_USERNAME=vip2cars_user
+    DB_PASSWORD=secure-password
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+**Critical**: Always set `APP_DEBUG=false` in production to prevent sensitive information exposure.
+</Warning>
+
+### Step 4: Database Setup
+
+<Steps>
+  <Step title="Run migrations">
+    ```bash
+    php artisan migrate --force
+    ```
+    
+    The `--force` flag is required in production environments.
+  </Step>
+  
+  <Step title="Seed data (optional)">
+    ```bash
+    php artisan db:seed
+    ```
+    
+    <Warning>
+    Only run seeders if you need test data. Production systems typically don't use seeders.
+    </Warning>
+  </Step>
+</Steps>
+
+### Step 5: Compile Assets
+
+```bash
+npm run build
+```
+
+This compiles and minifies all frontend assets using Vite.
+
+<Note>
+The build process creates optimized JavaScript and CSS files in the `public/build` directory.
+</Note>
+
+### Step 6: Optimize Application
+
+<Steps>
+  <Step title="Cache configuration">
+    ```bash
+    php artisan config:cache
+    ```
+    
+    Caches all configuration files into a single file for faster loading.
+  </Step>
+  
+  <Step title="Cache routes">
+    ```bash
+    php artisan route:cache
+    ```
+    
+    Compiles all routes into a single cached file.
+  </Step>
+  
+  <Step title="Cache views">
+    ```bash
+    php artisan view:cache
+    ```
+    
+    Pre-compiles all Blade templates.
+  </Step>
+  
+  <Step title="Cache events">
+    ```bash
+    php artisan event:cache
+    ```
+    
+    Caches event to listener mappings.
+  </Step>
+</Steps>
+
+<Note>
+After making changes to configuration, routes, or views, you must clear and recache these files.
+</Note>
+
+### Step 7: Set Permissions
+
+```bash
+sudo chown -R www-data:www-data /var/www/vip2cars
+sudo chmod -R 755 /var/www/vip2cars
+sudo chmod -R 775 /var/www/vip2cars/storage
+sudo chmod -R 775 /var/www/vip2cars/bootstrap/cache
+```
+
+<Warning>
+Proper permissions are critical for security. The web server needs write access to `storage` and `bootstrap/cache` directories only.
+</Warning>
+
+## Web Server Configuration
+
+### Nginx Configuration
+
+Create `/etc/nginx/sites-available/vip2cars`:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name yourdomain.com www.yourdomain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name yourdomain.com www.yourdomain.com;
+    root /var/www/vip2cars/public;
+
+    # SSL Configuration
+    ssl_certificate /etc/ssl/certs/yourdomain.crt;
+    ssl_certificate_key /etc/ssl/private/yourdomain.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # Logging
+    access_log /var/log/nginx/vip2cars-access.log;
+    error_log /var/log/nginx/vip2cars-error.log;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+```
+
+<Steps>
+  <Step title="Enable the site">
+    ```bash
+    sudo ln -s /etc/nginx/sites-available/vip2cars /etc/nginx/sites-enabled/
+    ```
+  </Step>
+  
+  <Step title="Test configuration">
+    ```bash
+    sudo nginx -t
+    ```
+  </Step>
+  
+  <Step title="Reload Nginx">
+    ```bash
+    sudo systemctl reload nginx
+    ```
+  </Step>
+</Steps>
+
+### Apache Configuration
+
+Create `/etc/apache2/sites-available/vip2cars.conf`:
+
+```apache
+<VirtualHost *:80>
+    ServerName yourdomain.com
+    ServerAlias www.yourdomain.com
+    Redirect permanent / https://yourdomain.com/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName yourdomain.com
+    ServerAlias www.yourdomain.com
+    DocumentRoot /var/www/vip2cars/public
+
+    # SSL Configuration
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/yourdomain.crt
+    SSLCertificateKeyFile /etc/ssl/private/yourdomain.key
+
+    # Logging
+    ErrorLog ${APACHE_LOG_DIR}/vip2cars-error.log
+    CustomLog ${APACHE_LOG_DIR}/vip2cars-access.log combined
+
+    <Directory /var/www/vip2cars/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+<Steps>
+  <Step title="Enable required modules">
+    ```bash
+    sudo a2enmod rewrite ssl
+    ```
+  </Step>
+  
+  <Step title="Enable the site">
+    ```bash
+    sudo a2ensite vip2cars.conf
+    ```
+  </Step>
+  
+  <Step title="Restart Apache">
+    ```bash
+    sudo systemctl restart apache2
+    ```
+  </Step>
+</Steps>
+
+## Queue Workers
+
+VIP2CARS uses database queues for background tasks.
+
+### Setup Supervisor
+
+Create `/etc/supervisor/conf.d/vip2cars-worker.conf`:
+
+```ini
+[program:vip2cars-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/vip2cars/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/var/www/vip2cars/storage/logs/worker.log
+stopwaitsecs=3600
+```
+
+<Steps>
+  <Step title="Read configuration">
+    ```bash
+    sudo supervisorctl reread
+    ```
+  </Step>
+  
+  <Step title="Update Supervisor">
+    ```bash
+    sudo supervisorctl update
+    ```
+  </Step>
+  
+  <Step title="Start workers">
+    ```bash
+    sudo supervisorctl start vip2cars-worker:*
+    ```
+  </Step>
+</Steps>
+
+### Check Worker Status
+
+```bash
+sudo supervisorctl status vip2cars-worker:*
+```
+
+## Task Scheduling
+
+Laravel's task scheduler requires a single cron entry.
+
+<Steps>
+  <Step title="Open crontab">
+    ```bash
+    sudo crontab -e -u www-data
+    ```
+  </Step>
+  
+  <Step title="Add scheduler entry">
+    ```cron
+    * * * * * cd /var/www/vip2cars && php artisan schedule:run >> /dev/null 2>&1
+    ```
+  </Step>
+</Steps>
+
+<Note>
+The scheduler runs every minute and executes any scheduled tasks defined in your application.
+</Note>
+
+## Deployment Script
+
+Create a deployment script for updates:
+
+```bash
+#!/bin/bash
+
+set -e
+
+echo "Starting deployment..."
+
+# Enable maintenance mode
+php artisan down --refresh=15
+
+# Pull latest changes
+git pull origin main
+
+# Install dependencies
+composer install --optimize-autoloader --no-dev
+npm ci
+
+# Compile assets
+npm run build
+
+# Run migrations
+php artisan migrate --force
+
+# Clear and cache
+php artisan config:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+
+# Restart queue workers
+sudo supervisorctl restart vip2cars-worker:*
+
+# Disable maintenance mode
+php artisan up
+
+echo "Deployment complete!"
+```
+
+Save as `deploy.sh` and make executable:
+
+```bash
+chmod +x deploy.sh
+```
+
+## Security Best Practices
+
+<Accordion title="1. Environment File Security">
+```bash
+sudo chmod 600 .env
+```
+
+Ensure `.env` is never committed to version control.
+</Accordion>
+
+<Accordion title="2. Disable Directory Listing">
+Ensure your web server configuration prevents directory browsing.
+</Accordion>
+
+<Accordion title="3. Keep Software Updated">
+```bash
+composer update
+npm update
+```
+
+Regularly update dependencies to patch security vulnerabilities.
+</Accordion>
+
+<Accordion title="4. Enable HTTPS Only">
+Force HTTPS by redirecting all HTTP traffic to HTTPS in your web server configuration.
+</Accordion>
+
+<Accordion title="5. Configure Firewall">
+```bash
+sudo ufw allow 22/tcp    # SSH
+sudo ufw allow 80/tcp    # HTTP
+sudo ufw allow 443/tcp   # HTTPS
+sudo ufw enable
+```
+</Accordion>
+
+<Accordion title="6. Regular Backups">
+Automate database and file backups:
+
+```bash
+# Database backup
+mysqldump -u username -p vip2cars > backup_$(date +%Y%m%d).sql
+
+# Files backup
+tar -czf vip2cars_$(date +%Y%m%d).tar.gz /var/www/vip2cars
+```
+</Accordion>
+
+## Monitoring and Maintenance
+
+### Log Monitoring
+
+```bash
+# Application logs
+tail -f storage/logs/laravel.log
+
+# Nginx logs
+tail -f /var/log/nginx/vip2cars-error.log
+
+# Queue worker logs
+tail -f storage/logs/worker.log
+```
+
+### Clear Caches
+
+If you encounter issues after deployment:
+
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+### Storage Cleanup
+
+Clean old log files:
+
+```bash
+find storage/logs -name "*.log" -mtime +30 -delete
+```
+
+## Performance Optimization
+
+<Steps>
+  <Step title="Enable OPcache">
+    Edit `/etc/php/8.2/fpm/php.ini`:
+    
+    ```ini
+    opcache.enable=1
+    opcache.memory_consumption=256
+    opcache.interned_strings_buffer=16
+    opcache.max_accelerated_files=10000
+    opcache.revalidate_freq=2
+    ```
+  </Step>
+  
+  <Step title="Optimize Composer autoloader">
+    ```bash
+    composer dump-autoload --optimize --classmap-authoritative
+    ```
+  </Step>
+  
+  <Step title="Use Redis for cache and sessions">
+    Update `.env`:
+    
+    ```bash
+    CACHE_STORE=redis
+    SESSION_DRIVER=redis
+    QUEUE_CONNECTION=redis
+    ```
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+<Accordion title="500 Internal Server Error">
+Check permissions:
+```bash
+sudo chmod -R 775 storage bootstrap/cache
+sudo chown -R www-data:www-data storage bootstrap/cache
+```
+
+Check logs:
+```bash
+tail -n 50 storage/logs/laravel.log
+```
+</Accordion>
+
+<Accordion title="Queue Jobs Not Processing">
+Check worker status:
+```bash
+sudo supervisorctl status vip2cars-worker:*
+```
+
+Restart workers:
+```bash
+sudo supervisorctl restart vip2cars-worker:*
+```
+</Accordion>
+
+<Accordion title="Assets Not Loading">
+Recompile assets:
+```bash
+npm run build
+```
+
+Check Vite manifest:
+```bash
+ls -la public/build/manifest.json
+```
+</Accordion>
+
+<Accordion title="Database Connection Failed">
+Test connection:
+```bash
+php artisan tinker
+>>> DB::connection()->getPdo();
+```
+
+Verify credentials in `.env` and MySQL user permissions.
+</Accordion>
+
+## Zero-Downtime Deployment
+
+For high-traffic applications, consider using Laravel Envoyer or Deployer for zero-downtime deployments with rollback capabilities.
+
+<Note>
+Laravel Envoyer (https://envoyer.io) provides automated zero-downtime deployments with health checks and rollback support.
+</Note>
+
+## Rollback Procedure
+
+If deployment fails:
+
+```bash
+# Revert to previous commit
+git reset --hard HEAD~1
+
+# Reinstall dependencies
+composer install --optimize-autoloader --no-dev
+npm ci && npm run build
+
+# Clear caches
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+
+# Rollback migrations (if needed)
+php artisan migrate:rollback
+
+# Disable maintenance mode
+php artisan up
+```
+
+## Conclusion
+
+Your VIP2CARS application is now deployed to production. Monitor logs regularly and keep dependencies updated for optimal security and performance.
+
+For additional support, refer to the [Laravel documentation](https://laravel.com/docs) or check the application logs for specific error messages.

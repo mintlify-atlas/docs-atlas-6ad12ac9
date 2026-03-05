@@ -1,0 +1,273 @@
+---
+title: System Architecture
+description: Comprehensive overview of VIP2CARS system architecture, MVC pattern implementation, and directory structure
+---
+
+## Overview
+
+VIP2CARS is built on **Laravel 12**, following the Model-View-Controller (MVC) architectural pattern. The system leverages modern Laravel features and integrates Livewire 4 for reactive components and Flux UI for the interface layer.
+
+## Architectural Pattern
+
+### MVC Implementation
+
+VIP2CARS follows Laravel's MVC pattern with clear separation of concerns:
+
+<Accordion title="Model Layer">
+  The Model layer handles data logic and database interactions through Eloquent ORM.
+  
+  **Core Models:**
+  - `Cliente` - Client/customer management
+  - `Vehiculo` - Vehicle management with client relationships
+  - `User` - User authentication and authorization
+  
+  **Location:** `/app/Models/`
+</Accordion>
+
+<Accordion title="View Layer">
+  The View layer uses Blade templating engine with Flux UI components for rendering.
+  
+  **Key View Directories:**
+  - `/resources/views/clientes/` - Client management views
+  - `/resources/views/vehiculos/` - Vehicle management views
+  - `/resources/views/layouts/` - Application layouts and shared templates
+  - `/resources/views/components/` - Reusable Blade components
+  - `/resources/views/flux/` - Custom Flux UI components
+  
+  **Location:** `/resources/views/`
+</Accordion>
+
+<Accordion title="Controller Layer">
+  The Controller layer processes HTTP requests and coordinates between Models and Views.
+  
+  **Core Controllers:**
+  - `ClienteController` - Handles client CRUD operations
+  - `VehiculoController` - Manages vehicle operations
+  - `DocumentacionController` - Handles documentation generation
+  
+  **Location:** `/app/Http/Controllers/`
+</Accordion>
+
+## Directory Structure
+
+### Application Core (`/app`)
+
+```
+app/
+├── Actions/              # Action classes for business logic
+│   └── Fortify/         # Laravel Fortify authentication actions
+│       ├── CreateNewUser.php
+│       └── ResetUserPassword.php
+├── Concerns/            # Reusable traits
+│   ├── PasswordValidationRules.php
+│   └── ProfileValidationRules.php
+├── Http/                # HTTP layer
+│   └── Controllers/     # Application controllers
+│       ├── ClienteController.php
+│       ├── VehiculoController.php
+│       ├── DocumentacionController.php
+│       └── Controller.php
+├── Livewire/            # Livewire components
+│   └── Actions/
+│       └── Logout.php
+├── Models/              # Eloquent models
+│   ├── Cliente.php
+│   ├── Vehiculo.php
+│   └── User.php
+└── Providers/           # Service providers
+    ├── AppServiceProvider.php
+    └── FortifyServiceProvider.php
+```
+
+### Database Layer (`/database`)
+
+```
+database/
+├── factories/           # Model factories for testing
+├── migrations/          # Database migrations
+│   ├── 0001_01_01_000000_create_users_table.php
+│   ├── 0001_01_01_000001_create_cache_table.php
+│   ├── 0001_01_01_000002_create_jobs_table.php
+│   ├── 2025_08_14_170933_add_two_factor_columns_to_users_table.php
+│   ├── 2026_03_04_001541_create_clientes_table.php
+│   └── 2026_03_04_001547_create_vehiculos_table.php
+└── seeders/             # Database seeders
+```
+
+### Resources (`/resources`)
+
+```
+resources/
+├── views/               # Blade templates
+│   ├── clientes/       # Client management views
+│   ├── vehiculos/      # Vehicle management views
+│   ├── components/     # Reusable components
+│   ├── flux/           # Custom Flux UI components
+│   ├── layouts/        # Application layouts
+│   └── pages/          # Static pages
+├── css/                # Stylesheets
+└── js/                 # JavaScript assets
+```
+
+### Routes (`/routes`)
+
+```
+routes/
+├── web.php             # Web application routes
+├── settings.php        # Settings-related routes
+└── console.php         # Artisan console routes
+```
+
+## Route Structure
+
+The application uses Laravel's resource routing for RESTful operations:
+
+```php
+// Public routes
+Route::view('/', 'welcome')->name('home');
+
+// Authenticated routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::resource('clientes', ClienteController::class);
+    Route::resource('vehiculos', VehiculoController::class);
+    Route::get('documentacion', [DocumentacionController::class, 'index']);
+});
+```
+
+<Info>
+  Resource controllers automatically handle standard CRUD operations (index, create, store, show, edit, update, destroy).
+</Info>
+
+## Authentication Flow
+
+### Laravel Fortify Integration
+
+VIP2CARS uses **Laravel Fortify** for authentication, providing:
+
+- User registration
+- Login/logout functionality
+- Password reset
+- Two-factor authentication (2FA)
+- Email verification
+
+### Two-Factor Authentication
+
+The system supports 2FA with the following features:
+- Secret key storage
+- Recovery codes
+- Confirmation timestamps
+
+Implemented via the `TwoFactorAuthenticatable` trait in the User model.
+
+## Livewire Integration
+
+### Reactive Components
+
+Livewire 4 is integrated for building reactive, dynamic interfaces without writing JavaScript:
+
+- **Version:** Livewire 4.0
+- **Location:** `/app/Livewire/`
+- **Components:**
+  - `Logout` action component
+
+### Flux UI Components
+
+**Flux UI** (v2.9.0) provides pre-built UI components:
+- Custom icon components
+- Navigation lists
+- Form elements
+- Layout components
+
+<Note>
+  Flux UI is Livewire's official UI component library, providing beautiful, accessible components out of the box.
+</Note>
+
+## Service Providers
+
+### AppServiceProvider
+Handles application-level service bindings and bootstrapping.
+
+**Location:** `/app/Providers/AppServiceProvider.php`
+
+### FortifyServiceProvider
+Configures Laravel Fortify authentication features and customizations.
+
+**Location:** `/app/Providers/FortifyServiceProvider.php`
+
+## Design Patterns
+
+### Repository Pattern (Implicit)
+Controllers interact directly with Eloquent models, following Laravel conventions:
+```php
+// Example from ClienteController
+$clientes = \App\Models\Cliente::all();
+```
+
+### Action Pattern
+Complex business logic is encapsulated in Action classes:
+- `CreateNewUser` - User registration logic
+- `ResetUserPassword` - Password reset logic
+
+### Concerns (Traits)
+Reusable functionality is extracted into traits:
+- `PasswordValidationRules` - Password validation logic
+- `ProfileValidationRules` - Profile validation rules
+
+## Request Lifecycle
+
+1. **HTTP Request** arrives at `/public/index.php`
+2. **Routing** matches request to controller action
+3. **Middleware** processes authentication, CSRF, etc.
+4. **Controller** receives request
+5. **Model** interacts with database if needed
+6. **View** renders response with Blade templates
+7. **Response** sent back to client
+
+## Configuration
+
+Configuration files are located in `/config/` and include:
+- `app.php` - Application settings
+- `database.php` - Database connections
+- `fortify.php` - Authentication settings
+- `livewire.php` - Livewire configuration
+
+## Asset Compilation
+
+The application uses **Vite** for asset compilation:
+- **Configuration:** `vite.config.js`
+- **Build Command:** `npm run build`
+- **Dev Server:** `npm run dev`
+
+<Info>
+  Vite provides fast HMR (Hot Module Replacement) during development and optimized builds for production.
+</Info>
+
+## Testing Structure
+
+Testing framework: **Pest PHP 3.8**
+
+```
+tests/
+├── Feature/            # Feature tests
+├── Unit/               # Unit tests
+└── TestCase.php        # Base test case
+```
+
+## Code Quality
+
+### Laravel Pint
+**Laravel Pint** is configured for code formatting and linting:
+- Configuration: `pint.json`
+- Run linter: `composer run lint`
+- Check format: `composer run lint:check`
+
+## Best Practices Implemented
+
+1. **Separation of Concerns** - Clear MVC boundaries
+2. **RESTful Routing** - Standard resource routes
+3. **Eloquent Relationships** - Proper model relationships
+4. **Request Validation** - Validation in controllers
+5. **Mass Assignment Protection** - Fillable properties defined
+6. **Route Protection** - Middleware for authentication
+7. **Type Hinting** - Strong typing throughout codebase

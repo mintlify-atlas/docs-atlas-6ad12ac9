@@ -1,0 +1,294 @@
+---
+title: User Accounts
+description: Complete guide for user registration, login, password management, and profile settings in VIP2CARS
+---
+
+VIP2CARS uses Laravel Fortify for secure user authentication and account management. This guide covers everything you need to know about managing your user account.
+
+## User Registration
+
+To create a new account in VIP2CARS:
+
+<Steps>
+  <Step title="Access Registration Page">
+    Navigate to the registration page from the login screen or home page.
+  </Step>
+  
+  <Step title="Provide Your Information">
+    Fill in the required registration fields:
+    
+    - **Name**: Your full name (maximum 255 characters)
+    - **Email**: A valid email address that will be used for login
+    - **Password**: A secure password meeting the system requirements
+    - **Password Confirmation**: Re-enter your password to confirm
+  </Step>
+  
+  <Step title="Submit Registration">
+    Click the registration button to create your account.
+  </Step>
+  
+  <Step title="Email Verification">
+    Check your email inbox for a verification message and click the verification link to activate your account.
+  </Step>
+  
+  <Step title="Access the System">
+    Once verified, log in with your credentials to access the VIP2CARS dashboard.
+  </Step>
+</Steps>
+
+<Note>
+  Your email address must be unique in the system. If the email is already registered, you'll need to use a different email address or recover your existing account.
+</Note>
+
+### Registration Requirements
+
+<Accordion title="Password Requirements">
+  Passwords must meet Laravel's default security requirements:
+  - Minimum length as configured in the system
+  - Must match the password confirmation field
+  - Consider using a strong password with a mix of letters, numbers, and symbols
+</Accordion>
+
+<Accordion title="Email Validation">
+  - Must be a valid email format
+  - Must be unique (not already registered)
+  - Maximum 255 characters
+  - Used for account recovery and system notifications
+</Accordion>
+
+<Tip>
+  Use a strong, unique password for your VIP2CARS account. Consider enabling two-factor authentication for additional security.
+</Tip>
+
+## Logging In
+
+To access your VIP2CARS account:
+
+<Steps>
+  <Step title="Navigate to Login Page">
+    Go to the VIP2CARS login page.
+  </Step>
+  
+  <Step title="Enter Credentials">
+    Provide your registered email address and password.
+  </Step>
+  
+  <Step title="Two-Factor Authentication (If Enabled)">
+    If you have two-factor authentication enabled, enter the code from your authenticator app or use a recovery code.
+  </Step>
+  
+  <Step title="Access Dashboard">
+    Upon successful login, you'll be redirected to the main dashboard.
+  </Step>
+</Steps>
+
+<Info>
+  Login attempts are rate-limited to 5 attempts per minute for security. If you exceed this limit, wait a few minutes before trying again.
+</Info>
+
+## Password Management
+
+VIP2CARS provides comprehensive password management features:
+
+### Changing Your Password
+
+<Steps>
+  <Step title="Access Settings">
+    Click on your profile menu and navigate to **Settings**.
+  </Step>
+  
+  <Step title="Go to Password Section">
+    Select **Password** from the settings menu.
+  </Step>
+  
+  <Step title="Provide Current Password">
+    Enter your current password for verification.
+  </Step>
+  
+  <Step title="Set New Password">
+    Enter your new password and confirm it by typing it again.
+  </Step>
+  
+  <Step title="Save Changes">
+    Click the save button to update your password.
+  </Step>
+</Steps>
+
+### Resetting a Forgotten Password
+
+If you've forgotten your password:
+
+<Steps>
+  <Step title="Click Forgot Password">
+    On the login page, click the **Forgot Password** link.
+  </Step>
+  
+  <Step title="Enter Your Email">
+    Provide the email address associated with your account.
+  </Step>
+  
+  <Step title="Check Your Email">
+    Look for a password reset email in your inbox.
+  </Step>
+  
+  <Step title="Click Reset Link">
+    Click the password reset link in the email. This link is time-limited for security.
+  </Step>
+  
+  <Step title="Set New Password">
+    Enter and confirm your new password.
+  </Step>
+  
+  <Step title="Log In">
+    Use your new password to log into the system.
+  </Step>
+</Steps>
+
+<Note>
+  Password reset links expire after a certain period for security reasons. If your link has expired, request a new one.
+</Note>
+
+## Profile Management
+
+Manage your account information in the profile settings:
+
+<Steps>
+  <Step title="Navigate to Profile Settings">
+    Go to **Settings** > **Profile** from your user menu.
+  </Step>
+  
+  <Step title="Update Your Information">
+    You can modify:
+    - **Name**: Update your display name
+    - **Email**: Change your email address (must be unique)
+  </Step>
+  
+  <Step title="Save Changes">
+    Click the save button to update your profile information.
+  </Step>
+</Steps>
+
+<Info>
+  If you change your email address, you may need to verify the new email before it becomes active.
+</Info>
+
+## Two-Factor Authentication
+
+Enhance your account security with two-factor authentication (2FA):
+
+### Enabling Two-Factor Authentication
+
+<Steps>
+  <Step title="Access Security Settings">
+    Navigate to **Settings** > **Two-Factor Authentication**.
+  </Step>
+  
+  <Step title="Confirm Password">
+    You may be asked to confirm your password before proceeding.
+  </Step>
+  
+  <Step title="Enable 2FA">
+    Click the button to enable two-factor authentication.
+  </Step>
+  
+  <Step title="Scan QR Code">
+    Use an authenticator app (like Google Authenticator or Authy) to scan the QR code displayed.
+  </Step>
+  
+  <Step title="Save Recovery Codes">
+    Important: Save the recovery codes in a secure location. These codes can be used to access your account if you lose access to your authenticator app.
+  </Step>
+  
+  <Step title="Complete Setup">
+    Confirm the setup by entering a code from your authenticator app.
+  </Step>
+</Steps>
+
+<Tip>
+  Store your recovery codes in a secure location separate from your device. You'll need these if you lose access to your authenticator app.
+</Tip>
+
+### Using Recovery Codes
+
+If you can't access your authenticator app:
+
+<Accordion title="How to Use Recovery Codes">
+  1. On the two-factor challenge screen, select the option to use a recovery code
+  2. Enter one of your saved recovery codes
+  3. Each recovery code can only be used once
+  4. After logging in, consider regenerating new recovery codes
+</Accordion>
+
+<Note>
+  Two-factor authentication attempts are rate-limited to 5 attempts per minute for security.
+</Note>
+
+## Account Security Best Practices
+
+<Accordion title="Use a Strong Password">
+  Create a password that is:
+  - At least 8-12 characters long
+  - Contains a mix of uppercase and lowercase letters
+  - Includes numbers and special characters
+  - Not used on other websites
+</Accordion>
+
+<Accordion title="Enable Two-Factor Authentication">
+  Two-factor authentication adds an extra layer of security to your account. Even if someone obtains your password, they won't be able to access your account without the second factor.
+</Accordion>
+
+<Accordion title="Keep Your Email Secure">
+  Your email account is the key to password recovery. Ensure your email account has a strong password and 2FA enabled as well.
+</Accordion>
+
+<Accordion title="Regular Password Updates">
+  Consider changing your password periodically, especially if you suspect it may have been compromised.
+</Accordion>
+
+## Account Deletion
+
+If you need to delete your account:
+
+<Steps>
+  <Step title="Access Settings">
+    Navigate to your account settings.
+  </Step>
+  
+  <Step title="Find Delete Account Option">
+    Look for the account deletion or deactivation section.
+  </Step>
+  
+  <Step title="Confirm Deletion">
+    You may be asked to confirm your password and acknowledge that account deletion is permanent.
+  </Step>
+  
+  <Step title="Complete Process">
+    Follow the prompts to complete the account deletion process.
+  </Step>
+</Steps>
+
+<Note>
+  Account deletion is typically permanent and cannot be undone. Make sure to export any important data before deleting your account.
+</Note>
+
+## Troubleshooting
+
+<Accordion title="I can't log in to my account">
+  - Verify you're using the correct email address
+  - Check that Caps Lock is not enabled
+  - Try resetting your password using the Forgot Password link
+  - Contact support if you continue to experience issues
+</Accordion>
+
+<Accordion title="I didn't receive the verification email">
+  - Check your spam or junk folder
+  - Verify you entered the correct email address during registration
+  - Request a new verification email if available
+  - Contact support if the issue persists
+</Accordion>
+
+<Accordion title="I lost access to my authenticator app">
+  - Use one of your saved recovery codes to log in
+  - Once logged in, disable and re-enable 2FA with your new device
+  - If you don't have recovery codes, contact support for assistance
+</Accordion>

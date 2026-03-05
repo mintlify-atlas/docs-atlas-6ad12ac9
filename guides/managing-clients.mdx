@@ -1,0 +1,147 @@
+---
+title: Managing Clients
+description: Learn how to create, view, edit, and delete client records in VIP2CARS
+---
+
+VIP2CARS allows you to maintain a comprehensive database of your clients. Each client can have multiple vehicles associated with their account.
+
+## Viewing All Clients
+
+To view your list of clients:
+
+<Steps>
+  <Step title="Navigate to Clients">
+    From the main dashboard, click on **Clientes** in the navigation menu.
+  </Step>
+  
+  <Step title="Browse Client List">
+    You'll see a list of all registered clients with their basic information displayed in a table format.
+  </Step>
+</Steps>
+
+<Info>
+  The client list displays all clients currently in the system. You can perform actions like viewing details, editing, or deleting from this screen.
+</Info>
+
+## Creating a New Client
+
+To add a new client to your system:
+
+<Steps>
+  <Step title="Access Creation Form">
+    Click the **Create** or **New Client** button on the clients list page.
+  </Step>
+  
+  <Step title="Fill in Required Information">
+    Complete all required fields in the registration form:
+    
+    - **Nombres** (First Name): Client's first name(s)
+    - **Apellidos** (Last Name): Client's last name(s)
+    - **Número de Documento** (Document Number): Unique identification number (must be unique in the system)
+    - **Correo Electrónico** (Email): Client's email address (must be unique and valid)
+    - **Teléfono** (Phone): Client's contact phone number (max 20 characters)
+  </Step>
+  
+  <Step title="Submit the Form">
+    Click the **Guardar** (Save) button to create the client record.
+  </Step>
+  
+  <Step title="Confirmation">
+    Upon successful creation, you'll be redirected to the clients list with a success message: "Cliente creado correctamente."
+  </Step>
+</Steps>
+
+<Note>
+  All fields are required when creating a new client. The system will validate that the document number and email are unique.
+</Note>
+
+### Validation Rules
+
+When creating a client, the following validation rules apply:
+
+<Accordion title="Field Requirements">
+  - **Nombres**: Required, maximum 255 characters
+  - **Apellidos**: Required, maximum 255 characters
+  - **Número de Documento**: Required, must be unique across all clients
+  - **Correo Electrónico**: Required, must be a valid email format, must be unique
+  - **Teléfono**: Required, maximum 20 characters
+</Accordion>
+
+<Tip>
+  Double-check the document number and email before saving, as these must be unique in the system. If a duplicate exists, you'll receive a validation error.
+</Tip>
+
+## Editing an Existing Client
+
+To update client information:
+
+<Steps>
+  <Step title="Locate the Client">
+    From the clients list, find the client you want to edit.
+  </Step>
+  
+  <Step title="Access Edit Form">
+    Click the **Edit** button next to the client's information.
+  </Step>
+  
+  <Step title="Modify Information">
+    Update any of the client fields:
+    - Nombres (First Name)
+    - Apellidos (Last Name)
+    - Número de Documento (Document Number)
+    - Correo Electrónico (Email)
+    - Teléfono (Phone)
+  </Step>
+  
+  <Step title="Save Changes">
+    Click **Guardar** (Save) to update the client record, or **Cancelar** (Cancel) to discard changes.
+  </Step>
+  
+  <Step title="Confirmation">
+    You'll be redirected to the clients list with a success message: "Cliente actualizado correctamente."
+  </Step>
+</Steps>
+
+<Info>
+  When editing a client, the document number and email must still be unique, but the system allows the current client to keep their existing values.
+</Info>
+
+## Deleting a Client
+
+To remove a client from the system:
+
+<Steps>
+  <Step title="Find the Client">
+    Navigate to the clients list and locate the client you want to delete.
+  </Step>
+  
+  <Step title="Initiate Deletion">
+    Click the **Delete** button next to the client's information.
+  </Step>
+  
+  <Step title="Confirm Deletion">
+    Confirm that you want to delete this client record.
+  </Step>
+  
+  <Step title="Completion">
+    The client will be removed from the system, and you'll see a success message: "Cliente eliminado correctamente."
+  </Step>
+</Steps>
+
+<Note>
+  Be careful when deleting clients. Consider the impact on any vehicles associated with this client before proceeding.
+</Note>
+
+## Common Tasks
+
+<Accordion title="How do I search for a specific client?">
+  Browse through the clients list on the main clients page. The table displays all client information, making it easy to scan and find specific records.
+</Accordion>
+
+<Accordion title="What happens to vehicles when I delete a client?">
+  Before deleting a client, consider reassigning their vehicles to another client or removing the vehicles first. The relationship between clients and vehicles is important for maintaining data integrity.
+</Accordion>
+
+<Accordion title="Can I have duplicate email addresses?">
+  No, each client must have a unique email address. The system will prevent you from creating or updating a client with an email that's already in use by another client.
+</Accordion>

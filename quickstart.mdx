@@ -1,80 +1,518 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start Guide
+description: Get up and running with VIP2CARS in minutes - from registration to managing your first client and vehicle
 ---
 
-## Get started in three steps
+# Quick Start Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will help you quickly get started with VIP2CARS, walking you through user registration, dashboard access, and creating your first client and vehicle records.
 
-### Step 1: Set up your local environment
+<Info>
+This guide assumes you've already completed the [Installation Guide](/installation) and have the application running at http://127.0.0.1:8000.
+</Info>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+## Prerequisites
 
-### Step 2: Deploy your changes
+Before starting, ensure:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+- Both development servers are running:
+  - PHP server: `php artisan serve`
+  - Vite dev server: `npm run dev`
+- Your browser is pointed to: http://127.0.0.1:8000
+- Database migrations have been executed successfully
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+## Getting Started
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
 
-### Step 3: Go live
+### Register a New Account
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+VIP2CARS uses authentication to protect client and vehicle data. You'll need to create an account first.
 
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+1. Navigate to http://127.0.0.1:8000/register
+2. Fill in the registration form:
+   - **Name**: Your full name
+   - **Email**: A valid email address
+   - **Password**: At least 8 characters
+   - **Confirm Password**: Match the password above
+3. Click the **Register** button
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+If you ran the migrations with seeders (`php artisan migrate --seed`), sample client and vehicle data will already be available after you log in.
 </Note>
+
+After successful registration, you'll be automatically logged in and redirected to the dashboard.
+
+### Access the Dashboard
+
+The dashboard is your central hub for managing clients and vehicles.
+
+**Dashboard URL**: http://127.0.0.1:8000/dashboard
+
+From the dashboard, you can:
+
+- View system overview
+- Navigate to client management
+- Navigate to vehicle management
+- Access documentation
+- Manage your account settings
+
+<Tip>
+The sidebar menu provides quick navigation to all major sections:
+- **Dashboard** - Overview page
+- **Clientes** - Client management
+- **Vehículos** - Vehicle management
+- **Documentation** - Technical documentation
+</Tip>
+
+### Navigate the Interface
+
+VIP2CARS uses a modern sidebar layout with the following components:
+
+**Sidebar Navigation:**
+- Logo and application name at the top
+- Main navigation links (Dashboard, Clientes, Vehículos)
+- Documentation link
+- User menu at the bottom (Settings, Logout)
+
+**Main Content Area:**
+- Page title and breadcrumbs
+- Action buttons (Create, Edit, Delete)
+- Data tables with search and pagination
+- Forms for data entry
+
+**User Menu:**
+- Profile settings
+- Password management
+- Two-factor authentication
+- Theme preferences (Dark/Light mode)
+- Logout
+
+### Create Your First Client
+
+Let's add a new client to the system.
+
+1. Click **Clientes** in the sidebar navigation
+2. Click the **Crear Cliente** (Create Client) button
+3. Fill in the client form:
+
+```yaml Client Information
+Nombres: Juan Carlos
+Apellidos: García Rodríguez
+Nro. Documento: 12345678
+Correo: juan.garcia@example.com
+Teléfono: +51 987 654 321
+```
+
+4. Click **Guardar** (Save) to create the client
+
+<Warning>
+**Unique Constraints:**
+- **Nro. Documento** (Document Number) must be unique across all clients
+- **Correo** (Email) must be unique across all clients
+
+Attempting to create a client with duplicate values will result in a validation error.
+</Warning>
+
+**Field Validation Rules:**
+
+| Field | Type | Rules | Max Length |
+|-------|------|-------|------------|
+| Nombres | String | Required | 255 |
+| Apellidos | String | Required | 255 |
+| Nro. Documento | String | Required, Unique | - |
+| Correo | Email | Required, Unique, Valid Email | - |
+| Teléfono | String | Required | 20 |
+
+After saving, you'll be redirected to the clients list where your new client appears.
+
+### View Client Details
+
+From the clients list:
+
+1. Locate your newly created client
+2. Click the **Ver** (View) or **Editar** (Edit) button
+3. View or modify client information
+4. See associated vehicles (if any)
+
+### Create a Vehicle Record
+
+Now let's add a vehicle for your client.
+
+1. Click **Vehículos** in the sidebar
+2. Click **Crear Vehículo** (Create Vehicle)
+3. Fill in the vehicle form:
+
+```yaml Vehicle Information
+Placa: ABC-123
+Marca: Toyota
+Modelo: Corolla
+Año de Fabricación: 2022
+Cliente: Juan Carlos García Rodríguez
+```
+
+4. Select the client from the dropdown
+5. Click **Guardar** (Save)
+
+<Info>
+**Client Selection:**
+The client dropdown shows all registered clients in the system. You must associate each vehicle with an existing client.
+</Info>
+
+**Vehicle Field Validation:**
+
+| Field | Type | Rules |
+|-------|------|-------|
+| Placa | String | Required, Unique |
+| Marca | String | Required |
+| Modelo | String | Required |
+| Año de Fabricación | Integer | Required, Valid Year |
+| Cliente | Foreign Key | Required, Must Exist |
+
+<Note>
+The **Placa** (license plate) must be unique. No two vehicles can have the same license plate number.
+</Note>
+
+### View Vehicle and Client Relationship
+
+VIP2CARS maintains relationships between clients and vehicles:
+
+**From Vehicle View:**
+- Each vehicle shows its associated client
+- Click the client name to view client details
+
+**From Client View:**
+- Client detail pages show all associated vehicles
+- View the complete history of vehicles owned by a client
+
+**Database Relationship:**
+
+```php app/Models/Cliente.php
+public function vehiculos()
+{
+    return $this->hasMany(Vehiculo::class, 'id_cliente', 'id_cliente');
+}
+```
+
+```php app/Models/Vehiculo.php
+public function cliente()
+{
+    return $this->belongsTo(Cliente::class, 'id_cliente', 'id_cliente');
+}
+```
+
+### Edit Records
+
+To modify existing records:
+
+**Edit a Client:**
+1. Go to **Clientes** list
+2. Click **Editar** (Edit) on the client row
+3. Modify the fields
+4. Click **Actualizar** (Update)
+
+**Edit a Vehicle:**
+1. Go to **Vehículos** list
+2. Click **Editar** (Edit) on the vehicle row
+3. Modify the fields
+4. Click **Actualizar** (Update)
+
+<Tip>
+When editing, unique constraint validation is adjusted to allow the current record's values while preventing duplicates with other records.
+</Tip>
+
+### Delete Records
+
+To remove records from the system:
+
+**Delete a Vehicle:**
+1. Navigate to the vehicles list
+2. Click **Eliminar** (Delete) on the vehicle row
+3. Confirm the deletion
+4. The vehicle is permanently removed
+
+**Delete a Client:**
+1. Navigate to the clients list
+2. Click **Eliminar** (Delete) on the client row
+3. Confirm the deletion
+
+<Warning>
+**Cascade Delete:**
+When you delete a client, ALL associated vehicles are automatically deleted. This action cannot be undone.
+
+**Database Foreign Key:**
+```sql
+FOREIGN KEY (id_cliente) 
+REFERENCES clientes(id_cliente) 
+ON DELETE CASCADE
+```
+</Warning>
+
+</Steps>
+
+## Common Workflows
+
+### Workflow 1: Register New Customer with Vehicle
+
+<Steps>
+
+1. **Create Client Record**
+   - Navigate to Clientes → Crear Cliente
+   - Enter customer details
+   - Save the client
+
+2. **Create Vehicle Record**
+   - Navigate to Vehículos → Crear Vehículo
+   - Enter vehicle details
+   - Select the newly created client
+   - Save the vehicle
+
+3. **Verify Relationship**
+   - View the client record
+   - Confirm the vehicle appears in the client's vehicle list
+
+</Steps>
+
+### Workflow 2: Update Client Information
+
+<Steps>
+
+1. **Locate Client**
+   - Go to Clientes list
+   - Search for the client by name or document number
+
+2. **Edit Details**
+   - Click Editar
+   - Update the necessary fields
+   - Click Actualizar
+
+3. **Verify Changes**
+   - Return to client list
+   - Confirm updated information is displayed
+
+</Steps>
+
+### Workflow 3: Transfer Vehicle to Another Client
+
+<Steps>
+
+1. **Edit Vehicle**
+   - Navigate to Vehículos
+   - Click Editar on the vehicle to transfer
+
+2. **Change Client Association**
+   - Select a different client from the dropdown
+   - Save the changes
+
+3. **Verify Transfer**
+   - Check the old client's record (vehicle should be gone)
+   - Check the new client's record (vehicle should appear)
+
+</Steps>
+
+## Authentication Features
+
+### Login and Logout
+
+**Login:**
+- URL: http://127.0.0.1:8000/login
+- Enter your email and password
+- Optional: Check "Remember Me" for persistent login
+
+**Logout:**
+- Click your name in the sidebar
+- Select **Logout**
+- You'll be redirected to the homepage
+
+### Password Reset
+
+If you forget your password:
+
+1. Go to the login page
+2. Click **Forgot Password?**
+3. Enter your email address
+4. Check your email for reset instructions
+5. Follow the link to set a new password
+
+<Note>
+Password reset requires proper mail configuration in your `.env` file. For development, check `storage/logs/laravel.log` if `MAIL_MAILER=log`.
+</Note>
+
+### Account Settings
+
+Access account settings from the user menu:
+
+**Profile Settings:**
+- Update your name and email
+- View account information
+
+**Password Management:**
+- Change your password
+- Requires current password for verification
+
+**Two-Factor Authentication:**
+- Enable 2FA for enhanced security
+- Scan QR code with authenticator app
+- Save recovery codes
+
+**Appearance:**
+- Toggle between light and dark modes
+- Preferences are saved per user
+
+## Tips for Efficient Use
+
+<Tip>
+**Keyboard Navigation:**
+- Use `Tab` to navigate between form fields
+- Press `Enter` to submit forms
+- Use browser back button or breadcrumbs to navigate
+</Tip>
+
+<Tip>
+**Search and Filter:**
+While not explicitly shown in controllers, you can use browser's find function (Ctrl+F / Cmd+F) to search within tables on the page.
+</Tip>
+
+<Tip>
+**Data Validation:**
+The system validates all input before saving. If you see an error message, check:
+- Required fields are filled
+- Email format is valid
+- Document number and email are unique
+- Numeric fields contain valid numbers
+</Tip>
+
+## API Routes
+
+VIP2CARS uses Laravel resource routes for RESTful operations:
+
+### Client Routes
+
+| Method | URI | Action | Route Name |
+|--------|-----|--------|------------|
+| GET | /clientes | List all clients | clientes.index |
+| GET | /clientes/create | Show create form | clientes.create |
+| POST | /clientes | Store new client | clientes.store |
+| GET | /clientes/{id} | Show client | clientes.show |
+| GET | /clientes/{id}/edit | Show edit form | clientes.edit |
+| PUT/PATCH | /clientes/{id} | Update client | clientes.update |
+| DELETE | /clientes/{id} | Delete client | clientes.destroy |
+
+### Vehicle Routes
+
+| Method | URI | Action | Route Name |
+|--------|-----|--------|------------|
+| GET | /vehiculos | List all vehicles | vehiculos.index |
+| GET | /vehiculos/create | Show create form | vehiculos.create |
+| POST | /vehiculos | Store new vehicle | vehiculos.store |
+| GET | /vehiculos/{id} | Show vehicle | vehiculos.show |
+| GET | /vehiculos/{id}/edit | Show edit form | vehiculos.edit |
+| PUT/PATCH | /vehiculos/{id} | Update vehicle | vehiculos.update |
+| DELETE | /vehiculos/{id} | Delete vehicle | vehiculos.destroy |
+
+<Info>
+All client and vehicle routes are protected by the `auth` and `verified` middleware, requiring authenticated users.
+</Info>
+
+## Understanding the Tech Stack
+
+### Livewire Components
+
+VIP2CARS uses Livewire for reactive components without writing JavaScript:
+
+- **Real-time Validation**: Form fields validate as you type
+- **Dynamic Updates**: Pages update without full page refresh
+- **Component Communication**: Seamless data flow between components
+
+### Flux UI Components
+
+The interface uses Flux UI components for consistent design:
+
+- **Buttons**: Primary, secondary, danger actions
+- **Forms**: Input fields, selects, textareas
+- **Tables**: Data display with sorting and actions
+- **Modals**: Confirmation dialogs and forms
+- **Navigation**: Sidebar, breadcrumbs, menus
+
+### Tailwind CSS
+
+Styling is powered by Tailwind CSS v4:
+
+- **Utility-First**: Rapid UI development
+- **Responsive Design**: Mobile-first approach
+- **Dark Mode**: Built-in theme switching
+- **Custom Components**: Reusable design patterns
+
+## Troubleshooting Common Issues
+
+### Issue: Can't Access Dashboard
+
+**Symptom**: Redirected to login when accessing /dashboard
+
+**Solution**: You must be logged in. Register a new account or log in with existing credentials.
+
+### Issue: Validation Errors on Form Submit
+
+**Symptom**: Form shows error messages
+
+**Solution**: Check that:
+- All required fields are filled
+- Email format is correct (user@example.com)
+- Document number and email are not already used by another client
+- Year is a valid 4-digit number
+
+### Issue: Client Dropdown Empty in Vehicle Form
+
+**Symptom**: No clients appear in vehicle creation form
+
+**Solution**: Create at least one client first. Vehicles must be associated with existing clients.
+
+### Issue: Changes Not Appearing
+
+**Symptom**: Updates don't show immediately
+
+**Solution**: 
+1. Refresh the page (F5)
+2. Clear browser cache
+3. Check that Vite dev server is running
+
+```bash
+npm run dev
+```
+
+## Next Steps
+
+Now that you're familiar with the basics:
+
+1. **Explore Advanced Features**:
+   - Set up two-factor authentication
+   - Customize your profile
+   - Export technical documentation
+
+2. **Learn More About Laravel**:
+   - [Laravel Documentation](https://laravel.com/docs)
+   - [Livewire Documentation](https://livewire.laravel.com)
+   - [Flux UI Components](https://flux.laravel.com)
+
+3. **Customize VIP2CARS**:
+   - Add custom fields to models
+   - Create additional reports
+   - Implement search functionality
+   - Add PDF export features
+
+<Tip>
+Access the built-in technical documentation by clicking **Documentation** in the sidebar menu for detailed information about the system architecture.
+</Tip>
+
+## Getting Help
+
+If you encounter issues:
+
+1. Check Laravel logs: `storage/logs/laravel.log`
+2. Review validation error messages
+3. Ensure all services are running
+4. Verify database connection
+
+<Info>
+For development questions, consult the [Laravel Documentation](https://laravel.com/docs/12.x) which covers all framework features used in VIP2CARS.
+</Info>

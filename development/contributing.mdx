@@ -1,0 +1,723 @@
+---
+title: Contributing Guidelines
+description: Learn how to contribute to VIP2CARS, including code style standards with Laravel Pint, PR process, and development workflow.
+---
+
+Thank you for your interest in contributing to VIP2CARS! This guide will help you understand our development workflow, code standards, and contribution process.
+
+## Getting Started
+
+Before contributing, make sure you have:
+
+1. Forked and cloned the repository
+2. Set up your development environment
+3. Read the [Extending Guide](/development/extending) and [Testing Guide](/development/testing)
+4. Reviewed existing issues and pull requests
+
+### Development Setup
+
+<Steps>
+  <Step title="Clone Your Fork">
+    ```bash
+    git clone https://github.com/YOUR_USERNAME/AndersonFarcequeFlores.git
+    cd AndersonFarcequeFlores
+    ```
+  </Step>
+
+  <Step title="Install Dependencies">
+    ```bash
+    # Install PHP dependencies
+    composer install
+
+    # Install Node.js dependencies
+    npm install
+    ```
+  </Step>
+
+  <Step title="Configure Environment">
+    ```bash
+    # Copy environment file
+    cp .env.example .env
+
+    # Generate application key
+    php artisan key:generate
+
+    # Configure database in .env
+    # Create vip2cars database
+    ```
+  </Step>
+
+  <Step title="Set Up Database">
+    ```bash
+    # Run migrations and seed data
+    php artisan migrate --seed
+    ```
+  </Step>
+
+  <Step title="Start Development Servers">
+    ```bash
+    # Use the composer dev script (recommended)
+    composer dev
+
+    # Or run servers separately:
+    # Terminal 1: PHP server
+    php artisan serve
+
+    # Terminal 2: Queue worker
+    php artisan queue:listen --tries=1
+
+    # Terminal 3: Vite dev server
+    npm run dev
+    ```
+  </Step>
+</Steps>
+
+<Tip>
+  The `composer dev` command uses `concurrently` to run all development servers in a single terminal with color-coded output.
+</Tip>
+
+## Code Style Standards
+
+VIP2CARS uses **Laravel Pint** for automatic code style enforcement. All code must follow Laravel's coding standards.
+
+### Pint Configuration
+
+The project uses Laravel's preset, configured in `pint.json`:
+
+```json pint.json
+{
+    "preset": "laravel"
+}
+```
+
+This enforces:
+- PSR-12 coding standard
+- Laravel-specific conventions
+- Consistent formatting across the codebase
+
+### Running Pint
+
+<CodeGroup>
+```bash Lint and Fix
+# Check and automatically fix code style issues
+composer lint
+
+# Or run Pint directly
+./vendor/bin/pint
+
+# Fix with parallelization (faster)
+./vendor/bin/pint --parallel
+```
+
+```bash Check Only
+# Check style without making changes
+composer lint:check
+
+# Or run Pint directly
+./vendor/bin/pint --test
+
+# Check with parallelization
+./vendor/bin/pint --parallel --test
+```
+
+```bash Specific Files
+# Fix specific files or directories
+./vendor/bin/pint app/Models
+./vendor/bin/pint app/Http/Controllers/ClienteController.php
+
+# Check specific paths
+./vendor/bin/pint app/Models --test
+```
+</CodeGroup>
+
+<Note>
+  Always run `composer lint` before committing. The CI pipeline will fail if code doesn't pass Pint checks.
+</Note>
+
+### Code Style Guidelines
+
+#### Class Structure
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Cliente extends Model
+{
+    // 1. Constants
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+
+    // 2. Properties
+    protected $table = 'clientes';
+    protected $primaryKey = 'id_cliente';
+    
+    protected $fillable = [
+        'nombres',
+        'apellidos',
+        'nro_documento',
+        'correo',
+        'telefono',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
+
+    // 3. Relationships
+    public function vehiculos(): HasMany
+    {
+        return $this->hasMany(Vehiculo::class, 'id_cliente', 'id_cliente');
+    }
+
+    // 4. Accessors & Mutators
+    public function getFullNameAttribute(): string
+    {
+        return "{$this->nombres} {$this->apellidos}";
+    }
+
+    // 5. Methods
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+}
+```
+
+#### Controller Structure
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Cliente;
+use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+
+class ClienteController extends Controller
+{
+    public function index(): View
+    {
+        $clientes = Cliente::all();
+
+        return view('clientes.index', compact('clientes'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'nombres' => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'nro_documento' => 'required|string|unique:clientes',
+            'correo' => 'required|email|unique:clientes',
+            'telefono' => 'required|string|max:20',
+        ]);
+
+        Cliente::create($data);
+
+        return redirect()
+            ->route('clientes.index')
+            ->with('success', 'Cliente creado correctamente.');
+    }
+}
+```
+
+#### Naming Conventions
+
+<Accordion title="Classes and Namespaces">
+  - **Controllers**: Singular, `PascalCase`, suffix with `Controller`
+    - ✅ `ClienteController`, `VehiculoController`
+    - ❌ `ClientesController`, `cliente_controller`
+  
+  - **Models**: Singular, `PascalCase`
+    - ✅ `Cliente`, `Vehiculo`, `User`
+    - ❌ `Clientes`, `cliente`
+  
+  - **Migrations**: Snake_case with timestamp prefix
+    - ✅ `2026_03_04_001541_create_clientes_table.php`
+    - ❌ `CreateClientesTable.php`
+</Accordion>
+
+<Accordion title="Methods and Variables">
+  - **Controller Methods**: `camelCase`, descriptive verbs
+    - ✅ `index()`, `store()`, `update()`, `destroy()`
+  
+  - **Variables**: `camelCase`, descriptive nouns
+    - ✅ `$clientes`, `$clienteData`, `$vehiculo`
+    - ❌ `$data`, `$temp`, `$x`
+  
+  - **Route Names**: Dot notation, lowercase
+    - ✅ `clientes.index`, `vehiculos.store`
+    - ❌ `clienteIndex`, `Vehiculos.Store`
+</Accordion>
+
+<Accordion title="Database">
+  - **Tables**: Plural, `snake_case`
+    - ✅ `clientes`, `vehiculos`, `servicios`
+    - ❌ `Cliente`, `Vehiculo`, `ServiciosTbl`
+  
+  - **Columns**: Singular, `snake_case`
+    - ✅ `nro_documento`, `fecha_servicio`, `created_at`
+    - ❌ `NroDocumento`, `fechaServicio`
+  
+  - **Primary Keys**: `id_{table_name_singular}`
+    - ✅ `id_cliente`, `id_vehiculo`, `id_servicio`
+    - ❌ `id`, `clienteId`
+  
+  - **Foreign Keys**: `id_{referenced_table_singular}`
+    - ✅ `id_cliente`, `id_vehiculo`
+    - ❌ `cliente_id`, `fk_cliente`
+</Accordion>
+
+## Development Workflow
+
+### Branch Strategy
+
+<Steps>
+  <Step title="Create Feature Branch">
+    Always create a new branch for your work:
+
+    ```bash
+    # From main branch
+    git checkout main
+    git pull origin main
+
+    # Create feature branch
+    git checkout -b feature/add-servicio-management
+    git checkout -b fix/cliente-validation-bug
+    git checkout -b docs/update-api-documentation
+    ```
+
+    Branch naming conventions:
+    - `feature/` - New features
+    - `fix/` - Bug fixes
+    - `refactor/` - Code refactoring
+    - `docs/` - Documentation changes
+    - `test/` - Test additions/updates
+  </Step>
+
+  <Step title="Make Your Changes">
+    Follow the development cycle:
+
+    1. Write failing tests first (TDD approach)
+    2. Implement the feature/fix
+    3. Ensure tests pass: `composer test`
+    4. Fix code style: `composer lint`
+    5. Manually test in browser
+  </Step>
+
+  <Step title="Commit Your Changes">
+    Write clear, descriptive commit messages:
+
+    ```bash
+    git add .
+    git commit -m "Add servicio management feature
+
+    - Create Servicio model, migration, and factory
+    - Implement ServicioController with CRUD operations
+    - Add resource routes for servicios
+    - Create feature tests for servicio management
+    - Update navigation to include servicios link"
+    ```
+
+    Commit message format:
+    - First line: Brief summary (50 chars or less)
+    - Blank line
+    - Detailed description (wrap at 72 chars)
+    - Use present tense ("Add feature" not "Added feature")
+  </Step>
+
+  <Step title="Push and Create PR">
+    ```bash
+    # Push your branch
+    git push origin feature/add-servicio-management
+
+    # Create pull request on GitHub
+    ```
+  </Step>
+</Steps>
+
+### Before Submitting a PR
+
+Complete this checklist:
+
+<Accordion title="Code Quality Checklist">
+  - [ ] All tests pass: `composer test`
+  - [ ] Code style is correct: `composer lint:check`
+  - [ ] No debug statements (`dd()`, `dump()`, `var_dump()`)
+  - [ ] No commented-out code
+  - [ ] No unused imports
+  - [ ] Proper type hints on methods
+  - [ ] PHPDoc blocks for complex methods
+</Accordion>
+
+<Accordion title="Testing Checklist">
+  - [ ] New features have feature tests
+  - [ ] Bug fixes have regression tests
+  - [ ] Edge cases are covered
+  - [ ] Tests are descriptive and well-named
+  - [ ] Database changes have corresponding factory updates
+  - [ ] Relationships are tested
+</Accordion>
+
+<Accordion title="Documentation Checklist">
+  - [ ] Code is self-documenting with clear names
+  - [ ] Complex logic has comments
+  - [ ] README updated if needed
+  - [ ] API docs updated if applicable
+  - [ ] Migration documented if schema changes
+</Accordion>
+
+## Pull Request Process
+
+### Creating a Pull Request
+
+<Steps>
+  <Step title="Write a Clear Title">
+    Use a descriptive title that summarizes the change:
+
+    - ✅ "Add service management feature with CRUD operations"
+    - ✅ "Fix validation bug in cliente email uniqueness check"
+    - ✅ "Refactor vehiculo controller to use form requests"
+    - ❌ "Update"
+    - ❌ "Fix bug"
+    - ❌ "Changes"
+  </Step>
+
+  <Step title="Write a Comprehensive Description">
+    Include:
+
+    ```markdown
+    ## Summary
+    Brief overview of what this PR does and why.
+
+    ## Changes
+    - Added Servicio model with relationships
+    - Created ServicioController with validation
+    - Implemented feature tests for all CRUD operations
+    - Updated navigation to include servicios link
+
+    ## Testing
+    - All existing tests pass
+    - Added 15 new feature tests
+    - Manually tested in browser
+
+    ## Screenshots
+    (If UI changes) Include before/after screenshots
+
+    ## Related Issues
+    Closes #123
+    Related to #456
+
+    ## Breaking Changes
+    (If any) Describe migration path
+    ```
+  </Step>
+
+  <Step title="Request Review">
+    - Assign relevant reviewers
+    - Add appropriate labels
+    - Link related issues
+    - Be responsive to feedback
+  </Step>
+
+  <Step title="Address Review Comments">
+    ```bash
+    # Make requested changes
+    git add .
+    git commit -m "Address review feedback
+
+    - Refactor validation into FormRequest
+    - Add missing test cases
+    - Fix typo in docblock"
+    
+    git push origin feature/add-servicio-management
+    ```
+  </Step>
+</Steps>
+
+### PR Review Guidelines
+
+Reviewers will check:
+
+1. **Code Quality**
+   - Follows Laravel and project conventions
+   - Clean, readable, maintainable code
+   - Proper error handling
+   - No security vulnerabilities
+
+2. **Testing**
+   - Adequate test coverage
+   - Tests are meaningful and well-written
+   - All tests pass
+
+3. **Documentation**
+   - Code is well-commented where needed
+   - README/docs updated if needed
+   - Commit messages are clear
+
+4. **Functionality**
+   - Feature works as described
+   - No regression bugs introduced
+   - Handles edge cases
+
+### PR Approval and Merge
+
+- PRs require at least one approval
+- All CI checks must pass
+- Conflicts must be resolved
+- Maintainers will merge approved PRs
+
+## Testing Standards
+
+All contributions must include appropriate tests.
+
+### Test Coverage Requirements
+
+<Note>
+  - **New features**: Must have feature tests covering main functionality
+  - **Bug fixes**: Must have regression tests preventing the bug's return
+  - **Refactoring**: Existing tests must still pass
+  - **API changes**: Must update or add integration tests
+</Note>
+
+### Running Tests Locally
+
+Before submitting your PR:
+
+```bash
+# Run full test suite
+composer test
+
+# Or run steps individually
+php artisan config:clear
+composer lint:check
+php artisan test
+
+# Check coverage (requires Xdebug)
+./vendor/bin/pest --coverage --min=80
+```
+
+## Reporting Issues
+
+When reporting bugs or requesting features:
+
+### Bug Reports Should Include
+
+```markdown
+## Description
+Clear description of the bug
+
+## Steps to Reproduce
+1. Go to '...'
+2. Click on '...'
+3. Scroll down to '...'
+4. See error
+
+## Expected Behavior
+What should happen
+
+## Actual Behavior
+What actually happens
+
+## Environment
+- PHP Version: 8.2.x
+- Laravel Version: 12.x
+- Browser: Chrome 120
+- OS: Windows 11 / macOS / Linux
+
+## Screenshots
+(If applicable)
+
+## Additional Context
+Any other relevant information
+```
+
+### Feature Requests Should Include
+
+```markdown
+## Feature Description
+Clear description of the proposed feature
+
+## Use Case
+Why is this feature needed? What problem does it solve?
+
+## Proposed Solution
+How you envision this working
+
+## Alternatives Considered
+Other approaches you've thought about
+
+## Additional Context
+Mockups, examples, references
+```
+
+## Code Review Tips
+
+### For Contributors
+
+<Tip>
+  - Keep PRs focused and reasonably sized
+  - Respond to feedback promptly and professionally
+  - Don't take criticism personally - it's about code quality
+  - Ask questions if feedback is unclear
+  - Update your PR based on review comments
+</Tip>
+
+### For Reviewers
+
+<Tip>
+  - Be constructive and respectful
+  - Explain *why* changes are needed
+  - Acknowledge good work
+  - Test the changes locally when possible
+  - Focus on significant issues first
+</Tip>
+
+## Common Issues and Solutions
+
+<Accordion title="Pint Failures">
+  If Pint reports style issues:
+
+  ```bash
+  # See what will be fixed
+  ./vendor/bin/pint --test
+
+  # Auto-fix all issues
+  ./vendor/bin/pint
+
+  # Commit the fixes
+  git add .
+  git commit -m "Fix code style with Pint"
+  ```
+</Accordion>
+
+<Accordion title="Test Failures">
+  If tests fail:
+
+  ```bash
+  # Run tests with verbose output
+  php artisan test --verbose
+
+  # Run specific failing test
+  php artisan test --filter="test_name"
+
+  # Clear caches
+  php artisan config:clear
+  php artisan cache:clear
+  php artisan view:clear
+  ```
+</Accordion>
+
+<Accordion title="Merge Conflicts">
+  If you have merge conflicts:
+
+  ```bash
+  # Update your branch with main
+  git checkout main
+  git pull origin main
+  git checkout your-branch
+  git merge main
+
+  # Resolve conflicts in your editor
+  # Then:
+  git add .
+  git commit -m "Resolve merge conflicts with main"
+  git push origin your-branch
+  ```
+</Accordion>
+
+<Accordion title="Failed CI Checks">
+  Common CI failure reasons:
+  
+  - Code style issues: Run `composer lint`
+  - Test failures: Run `composer test` locally
+  - Merge conflicts: Rebase on main
+  - Missing dependencies: Run `composer install`
+  - Environment issues: Check `.env.example` for new variables
+</Accordion>
+
+## Composer Scripts Reference
+
+VIP2CARS provides convenient composer scripts:
+
+```json composer.json
+{
+  "scripts": {
+    "setup": "Full project setup (install, env, key, migrate, npm)",
+    "dev": "Start development servers (serve, queue, vite)",
+    "lint": "Fix code style with Pint",
+    "lint:check": "Check code style without fixing",
+    "test": "Run full test suite (config:clear, lint:check, test)",
+    "ci:check": "Run CI validation"
+  }
+}
+```
+
+### Usage Examples
+
+```bash
+# First-time setup
+composer setup
+
+# Start development
+composer dev
+
+# Before committing
+composer lint      # Fix style
+composer test      # Run tests
+
+# Check without changes
+composer lint:check
+```
+
+## Getting Help
+
+If you need assistance:
+
+1. Check existing documentation
+2. Search existing issues and PRs
+3. Ask in discussions or create an issue
+4. Be specific and provide context
+5. Include relevant code snippets and error messages
+
+## Recognition
+
+Contributors are recognized in:
+- GitHub contributors page
+- Release notes for significant contributions
+- Project README (for major features)
+
+## Code of Conduct
+
+All contributors must:
+
+- Be respectful and professional
+- Focus on constructive feedback
+- Welcome newcomers
+- Respect different viewpoints
+- Accept responsibility for mistakes
+
+## Resources
+
+- [Laravel Documentation](https://laravel.com/docs)
+- [Pest PHP Documentation](https://pestphp.com)
+- [Laravel Pint Documentation](https://laravel.com/docs/pint)
+- [PSR-12 Coding Standard](https://www.php-fig.org/psr/psr-12/)
+
+## Next Steps
+
+Now that you understand our contribution process:
+
+1. Find an issue to work on or propose a new feature
+2. Follow the [Extending Guide](/development/extending) to implement your changes
+3. Write tests following the [Testing Guide](/development/testing)
+4. Submit your PR following these guidelines
+
+We look forward to your contributions to VIP2CARS!

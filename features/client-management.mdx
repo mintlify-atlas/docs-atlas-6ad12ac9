@@ -1,0 +1,220 @@
+---
+title: Client Management
+description: Comprehensive guide to managing clients in VIP2CARS with CRUD operations, validation rules, and relationships.
+---
+
+The client management system allows you to create, view, update, and delete client records. Each client can be associated with multiple vehicles, establishing the foundation for the automotive management workflow.
+
+## Overview
+
+Clients are managed through the `ClienteController` located at `app/Http/Controllers/ClienteController.php:7`. The system uses the `Cliente` model with a custom primary key `id_cliente` and stores data in the `clientes` table.
+
+## Model Structure
+
+The `Cliente` model includes the following fields:
+
+<CardGroup cols={2}>
+  <Card title="nombres" icon="user">
+    Client's first name(s) - Required, string, max 255 characters
+  </Card>
+  <Card title="apellidos" icon="user">
+    Client's last name(s) - Required, string, max 255 characters
+  </Card>
+  <Card title="nro_documento" icon="id-card">
+    Document number - Required, unique, string
+  </Card>
+  <Card title="correo" icon="envelope">
+    Email address - Required, unique, valid email format
+  </Card>
+  <Card title="telefono" icon="phone">
+    Phone number - Required, string, max 20 characters
+  </Card>
+  <Card title="id_cliente" icon="key">
+    Primary key - Auto-generated
+  </Card>
+</CardGroup>
+
+## CRUD Operations
+
+### Listing Clients
+
+Retrieve all clients from the database.
+
+**Route:** `GET /clientes`
+
+**Controller Method:** `ClienteController::index()` at line 12
+
+```php
+public function index()
+{
+    $clientes = \App\Models\Cliente::all();
+    return view('clientes.index', compact('clientes'));
+}
+```
+
+### Creating a Client
+
+<Accordion title="Create Form">
+  **Route:** `GET /clientes/create`
+  
+  **Controller Method:** `ClienteController::create()` at line 18
+  
+  Displays the client creation form with all required fields.
+</Accordion>
+
+<Accordion title="Store Client">
+  **Route:** `POST /clientes`
+  
+  **Controller Method:** `ClienteController::store()` at line 23
+  
+  Validates and stores a new client in the database.
+  
+  ```php
+  $data = $request->validate([
+      'nombres' => 'required|string|max:255',
+      'apellidos' => 'required|string|max:255',
+      'nro_documento' => 'required|string|unique:clientes,nro_documento',
+      'correo' => 'required|email|unique:clientes,correo',
+      'telefono' => 'required|string|max:20',
+  ]);
+  ```
+  
+  **Success Response:** Redirects to `clientes.index` with success message "Cliente creado correctamente."
+</Accordion>
+
+### Viewing a Client
+
+**Route:** `GET /clientes/{id}`
+
+**Controller Method:** `ClienteController::show()` at line 38
+
+```php
+public function show(string $id)
+{
+    $cliente = \App\Models\Cliente::findOrFail($id);
+    return view('clientes.show', compact('cliente'));
+}
+```
+
+<Note>
+  The system uses `findOrFail()` which automatically returns a 404 error if the client doesn't exist.
+</Note>
+
+### Updating a Client
+
+<Accordion title="Edit Form">
+  **Route:** `GET /clientes/{id}/edit`
+  
+  **Controller Method:** `ClienteController::edit()` at line 44
+  
+  Displays the client edit form pre-filled with existing data.
+</Accordion>
+
+<Accordion title="Update Client">
+  **Route:** `PUT/PATCH /clientes/{id}`
+  
+  **Controller Method:** `ClienteController::update()` at line 50
+  
+  Validates and updates an existing client record.
+  
+  ```php
+  $data = $request->validate([
+      'nombres' => 'required|string|max:255',
+      'apellidos' => 'required|string|max:255',
+      'nro_documento' => 'required|string|unique:clientes,nro_documento,'.$id.',id_cliente',
+      'correo' => 'required|email|unique:clientes,correo,'.$id.',id_cliente',
+      'telefono' => 'required|string|max:20',
+  ]);
+  ```
+  
+  <Warning>
+    The unique validation rules exclude the current client ID to allow updating the same record without triggering uniqueness errors.
+  </Warning>
+  
+  **Success Response:** Redirects to `clientes.index` with success message "Cliente actualizado correctamente."
+</Accordion>
+
+### Deleting a Client
+
+**Route:** `DELETE /clientes/{id}`
+
+**Controller Method:** `ClienteController::destroy()` at line 67
+
+```php
+public function destroy(string $id)
+{
+    $cliente = \App\Models\Cliente::findOrFail($id);
+    $cliente->delete();
+    
+    return redirect()->route('clientes.index')
+        ->with('success', 'Cliente eliminado correctamente.');
+}
+```
+
+<Warning>
+  Deleting a client may affect associated vehicles. Ensure proper foreign key constraints or cascade rules are configured in your database.
+</Warning>
+
+## Relationships
+
+The `Cliente` model has a one-to-many relationship with vehicles defined at `app/Models/Cliente.php:20`:
+
+```php
+public function vehiculos()
+{
+    return $this->hasMany(Vehiculo::class, 'id_cliente', 'id_cliente');
+}
+```
+
+This means:
+- A single client can own multiple vehicles
+- Access a client's vehicles using `$cliente->vehiculos`
+- The relationship is keyed by `id_cliente` on both tables
+
+## Validation Rules
+
+### On Create
+
+| Field | Rules | Description |
+|-------|-------|-------------|
+| `nombres` | required, string, max:255 | Client's first name(s) |
+| `apellidos` | required, string, max:255 | Client's last name(s) |
+| `nro_documento` | required, string, unique:clientes,nro_documento | Unique document number |
+| `correo` | required, email, unique:clientes,correo | Unique email address |
+| `telefono` | required, string, max:20 | Phone number |
+
+### On Update
+
+<Note>
+  Update validation is identical to create validation, except unique rules exclude the current record:
+  - `unique:clientes,nro_documento,{id},id_cliente`
+  - `unique:clientes,correo,{id},id_cliente`
+</Note>
+
+## Route Protection
+
+All client management routes are protected by middleware defined in `routes/web.php:12`:
+
+```php
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('clientes', ClienteController::class);
+});
+```
+
+<Warning>
+  Users must be authenticated AND have verified their email address to access client management features.
+</Warning>
+
+## RESTful Resource Routes
+
+The `Route::resource()` declaration automatically creates these routes:
+
+| Method | URI | Action | Route Name |
+|--------|-----|--------|------------|
+| GET | /clientes | index | clientes.index |
+| GET | /clientes/create | create | clientes.create |
+| POST | /clientes | store | clientes.store |
+| GET | /clientes/{id} | show | clientes.show |
+| GET | /clientes/{id}/edit | edit | clientes.edit |
+| PUT/PATCH | /clientes/{id} | update | clientes.update |
+| DELETE | /clientes/{id} | destroy | clientes.destroy |

@@ -1,0 +1,386 @@
+---
+title: Environment Configuration
+description: Configure VIP2CARS environment variables and database settings
+---
+
+Proper configuration is essential for running VIP2CARS. This guide covers all environment settings and database configuration.
+
+## Environment File Setup
+
+### Creating the .env File
+
+VIP2CARS uses a `.env` file for environment-specific configuration.
+
+<Steps>
+  <Step title="Copy the example file">
+    ```bash
+    cp .env.example .env
+    ```
+  </Step>
+  
+  <Step title="Generate application key">
+    ```bash
+    php artisan key:generate
+    ```
+    This creates a secure encryption key for your application.
+  </Step>
+  
+  <Step title="Edit configuration">
+    Open `.env` in your text editor and configure the settings below.
+  </Step>
+</Steps>
+
+## Application Settings
+
+### Basic Configuration
+
+```bash
+APP_NAME=VIP2CARS
+APP_ENV=production
+APP_KEY=base64:your-generated-key-here
+APP_DEBUG=false
+APP_URL=https://yourdomain.com
+```
+
+<Accordion title="APP_NAME">
+The name of your application. This is used in emails, notifications, and the UI.
+
+**Default**: `Laravel`  
+**Recommended**: `VIP2CARS`
+</Accordion>
+
+<Accordion title="APP_ENV">
+The application environment.
+
+**Options**: `local`, `staging`, `production`  
+**Development**: `local`  
+**Production**: `production`
+</Accordion>
+
+<Accordion title="APP_KEY">
+Encryption key for securing session data and encrypted values.
+
+<Warning>
+**Never share your APP_KEY**. Generate a new one using `php artisan key:generate`.
+</Warning>
+</Accordion>
+
+<Accordion title="APP_DEBUG">
+Enables detailed error messages.
+
+**Development**: `true`  
+**Production**: `false`
+
+<Warning>
+Always set to `false` in production to prevent sensitive information leakage.
+</Warning>
+</Accordion>
+
+<Accordion title="APP_URL">
+The base URL of your application.
+
+**Development**: `http://localhost:8000`  
+**Production**: `https://yourdomain.com`
+</Accordion>
+
+### Localization Settings
+
+```bash
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=en_US
+```
+
+- **APP_LOCALE**: Default language for the application
+- **APP_FALLBACK_LOCALE**: Fallback language if translation is missing
+- **APP_FAKER_LOCALE**: Locale for generating fake data in seeders
+
+### Security Settings
+
+```bash
+BCRYPT_ROUNDS=12
+```
+
+The number of hashing rounds for password encryption. Higher values are more secure but slower.
+
+<Note>
+Default value of 12 provides a good balance between security and performance.
+</Note>
+
+## Database Configuration
+
+### MySQL Database (Recommended)
+
+For production environments, configure MySQL/MariaDB:
+
+```bash
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=vip2cars
+DB_USERNAME=root
+DB_PASSWORD=your-secure-password
+```
+
+<Steps>
+  <Step title="Create the database">
+    ```sql
+    CREATE DATABASE vip2cars CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ```
+  </Step>
+  
+  <Step title="Create database user (recommended)">
+    ```sql
+    CREATE USER 'vip2cars_user'@'localhost' IDENTIFIED BY 'secure-password';
+    GRANT ALL PRIVILEGES ON vip2cars.* TO 'vip2cars_user'@'localhost';
+    FLUSH PRIVILEGES;
+    ```
+  </Step>
+  
+  <Step title="Update .env file">
+    ```bash
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=vip2cars
+    DB_USERNAME=vip2cars_user
+    DB_PASSWORD=secure-password
+    ```
+  </Step>
+</Steps>
+
+### SQLite Database (Development)
+
+For local development, SQLite is pre-configured:
+
+```bash
+DB_CONNECTION=sqlite
+```
+
+<Note>
+With SQLite, you don't need to specify host, port, username, or password. The database file is stored at `database/database.sqlite`.
+</Note>
+
+### Additional Database Options
+
+<Accordion title="DB_CHARSET and DB_COLLATION">
+```bash
+DB_CHARSET=utf8mb4
+DB_COLLATION=utf8mb4_unicode_ci
+```
+
+These are automatically set for MySQL connections and ensure proper Unicode support.
+</Accordion>
+
+<Accordion title="DB_SOCKET (Unix Socket)">
+```bash
+DB_SOCKET=/var/run/mysqld/mysqld.sock
+```
+
+Optional: Use Unix socket instead of TCP connection for local databases.
+</Accordion>
+
+## Session Configuration
+
+```bash
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
+```
+
+<Accordion title="SESSION_DRIVER">
+**Options**: `file`, `cookie`, `database`, `redis`
+
+**Default**: `database` - Sessions are stored in the database.
+
+<Note>
+For production with multiple servers, use `redis` or `database` for session persistence.
+</Note>
+</Accordion>
+
+<Accordion title="SESSION_LIFETIME">
+Session lifetime in minutes.
+
+**Default**: `120` (2 hours)
+</Accordion>
+
+## Cache Configuration
+
+```bash
+CACHE_STORE=database
+```
+
+**Available drivers**:
+- `file` - File-based cache (default for development)
+- `database` - Database cache (default)
+- `redis` - Redis cache (recommended for production)
+- `memcached` - Memcached cache
+
+<Note>
+For production environments, consider using Redis for better performance.
+</Note>
+
+## Queue Configuration
+
+```bash
+QUEUE_CONNECTION=database
+```
+
+**Available drivers**:
+- `sync` - Synchronous (no queue)
+- `database` - Database queue (default)
+- `redis` - Redis queue (recommended for production)
+
+<Warning>
+In production, use `database` or `redis` and run `php artisan queue:work` as a background process.
+</Warning>
+
+## Mail Configuration
+
+### Development (Log)
+
+```bash
+MAIL_MAILER=log
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+During development, emails are written to `storage/logs/laravel.log`.
+
+### Production (SMTP)
+
+```bash
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your-username
+MAIL_PASSWORD=your-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="noreply@yourdomain.com"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+## Redis Configuration (Optional)
+
+```bash
+REDIS_CLIENT=phpredis
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+```
+
+<Note>
+Redis is optional but recommended for production caching and queues.
+</Note>
+
+## Logging Configuration
+
+```bash
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+```
+
+### Production Logging
+
+```bash
+LOG_CHANNEL=stack
+LOG_STACK=daily
+LOG_LEVEL=error
+```
+
+**Log levels** (from least to most severe):
+- `debug` - Detailed debug information
+- `info` - Informational messages
+- `notice` - Normal but significant events
+- `warning` - Warning messages
+- `error` - Error messages
+- `critical` - Critical conditions
+- `alert` - Action must be taken immediately
+- `emergency` - System is unusable
+
+## Storage Configuration
+
+```bash
+FILESYSTEM_DISK=local
+```
+
+**Available disks**:
+- `local` - Local storage in `storage/app`
+- `public` - Public storage in `storage/app/public`
+- `s3` - Amazon S3 (requires AWS configuration)
+
+## AWS S3 Configuration (Optional)
+
+```bash
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=your-bucket-name
+AWS_USE_PATH_STYLE_ENDPOINT=false
+```
+
+## Vite Configuration
+
+```bash
+VITE_APP_NAME="${APP_NAME}"
+```
+
+This makes the app name available to your frontend JavaScript code.
+
+## Maintenance Mode
+
+```bash
+APP_MAINTENANCE_DRIVER=file
+```
+
+Controls how maintenance mode state is stored.
+
+<Note>
+Enable maintenance mode with `php artisan down` and disable with `php artisan up`.
+</Note>
+
+## Configuration Caching
+
+After modifying your `.env` file in production:
+
+<Steps>
+  <Step title="Clear configuration cache">
+    ```bash
+    php artisan config:clear
+    ```
+  </Step>
+  
+  <Step title="Cache configuration">
+    ```bash
+    php artisan config:cache
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+When configuration is cached, the `.env` file is not read. Always clear and recache after changes.
+</Warning>
+
+## Verification
+
+Test your database connection:
+
+```bash
+php artisan tinker
+```
+
+Then run:
+
+```php
+DB::connection()->getPdo();
+```
+
+If successful, you'll see PDO connection details.
+
+## Next Steps
+
+With your environment configured, proceed to [Production Deployment](/deployment/production) to prepare your application for production.

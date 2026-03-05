@@ -1,0 +1,175 @@
+---
+title: Managing Vehicles
+description: Learn how to create, view, edit, and delete vehicle records and associate them with clients in VIP2CARS
+---
+
+VIP2CARS enables you to manage a complete inventory of vehicles and their relationships with clients. Each vehicle must be associated with a registered client.
+
+## Viewing All Vehicles
+
+To view your vehicle inventory:
+
+<Steps>
+  <Step title="Navigate to Vehicles">
+    From the main dashboard, click on **Vehículos** in the navigation menu.
+  </Step>
+  
+  <Step title="Browse Vehicle List">
+    You'll see a complete list of all registered vehicles along with their associated client information.
+  </Step>
+</Steps>
+
+<Info>
+  The vehicle list displays each vehicle with its associated client information, making it easy to see the complete relationship between vehicles and their owners.
+</Info>
+
+## Creating a New Vehicle
+
+To add a new vehicle to your system:
+
+<Steps>
+  <Step title="Access Creation Form">
+    Click the **Create** or **New Vehicle** button on the vehicles list page.
+  </Step>
+  
+  <Step title="Fill in Vehicle Details">
+    Complete all required fields in the registration form:
+    
+    - **Placa** (License Plate): Unique vehicle license plate number
+    - **Marca** (Brand): Vehicle manufacturer (e.g., Toyota, Honda, Ford)
+    - **Modelo** (Model): Vehicle model name
+    - **Año de Fabricación** (Year of Manufacture): 4-digit year (e.g., 2024)
+    - **Cliente** (Client): Select the vehicle owner from the dropdown list
+  </Step>
+  
+  <Step title="Select the Client">
+    From the **Cliente** dropdown, choose the client who owns this vehicle. The dropdown displays the client's full name and document number for easy identification.
+  </Step>
+  
+  <Step title="Submit the Form">
+    Click the **Guardar** (Save) button to create the vehicle record.
+  </Step>
+  
+  <Step title="Confirmation">
+    Upon successful creation, you'll be redirected to the vehicles list with a success message: "Vehículo creado correctamente."
+  </Step>
+</Steps>
+
+<Note>
+  All fields are required when creating a new vehicle. The license plate must be unique in the system, and you must have at least one registered client before adding a vehicle.
+</Note>
+
+### Validation Rules
+
+When creating a vehicle, the following validation rules apply:
+
+<Accordion title="Field Requirements">
+  - **Placa**: Required, must be unique across all vehicles
+  - **Marca**: Required, maximum 255 characters
+  - **Modelo**: Required, maximum 255 characters
+  - **Año de Fabricación**: Required, must be a 4-digit number
+  - **Cliente**: Required, must be an existing client ID
+</Accordion>
+
+<Tip>
+  Before adding a vehicle, ensure the client is already registered in the system. If you need to add a vehicle for a new client, create the client record first.
+</Tip>
+
+## Editing an Existing Vehicle
+
+To update vehicle information:
+
+<Steps>
+  <Step title="Locate the Vehicle">
+    From the vehicles list, find the vehicle you want to edit.
+  </Step>
+  
+  <Step title="Access Edit Form">
+    Click the **Edit** button next to the vehicle's information.
+  </Step>
+  
+  <Step title="Modify Information">
+    Update any of the vehicle fields:
+    - Placa (License Plate)
+    - Marca (Brand)
+    - Modelo (Model)
+    - Año de Fabricación (Year of Manufacture)
+    - Cliente (Owner)
+  </Step>
+  
+  <Step title="Change Vehicle Owner (Optional)">
+    If transferring ownership, select a different client from the dropdown menu. The list shows all registered clients with their names and document numbers.
+  </Step>
+  
+  <Step title="Save Changes">
+    Click **Guardar** (Save) to update the vehicle record, or **Cancelar** (Cancel) to discard changes.
+  </Step>
+  
+  <Step title="Confirmation">
+    You'll be redirected to the vehicles list with a success message: "Vehículo actualizado correctamente."
+  </Step>
+</Steps>
+
+<Info>
+  You can easily transfer vehicle ownership by changing the associated client in the edit form. This is useful for tracking vehicle sales or transfers between clients.
+</Info>
+
+## Deleting a Vehicle
+
+To remove a vehicle from the system:
+
+<Steps>
+  <Step title="Find the Vehicle">
+    Navigate to the vehicles list and locate the vehicle you want to delete.
+  </Step>
+  
+  <Step title="Initiate Deletion">
+    Click the **Delete** button next to the vehicle's information.
+  </Step>
+  
+  <Step title="Confirm Deletion">
+    Confirm that you want to delete this vehicle record.
+  </Step>
+  
+  <Step title="Completion">
+    The vehicle will be removed from the system, and you'll see a success message: "Vehículo eliminado correctamente."
+  </Step>
+</Steps>
+
+<Note>
+  Deleting a vehicle is permanent. Make sure you have the correct vehicle selected before confirming deletion.
+</Note>
+
+## Understanding Vehicle-Client Relationships
+
+VIP2CARS maintains a strong relationship between vehicles and clients:
+
+<Accordion title="One Client, Multiple Vehicles">
+  A single client can own multiple vehicles. When viewing the client details, you can see all vehicles associated with that client.
+</Accordion>
+
+<Accordion title="Each Vehicle Has One Owner">
+  Each vehicle must be associated with exactly one client at any given time. This ensures clear ownership records.
+</Accordion>
+
+<Accordion title="Viewing Vehicle with Client Information">
+  When you view the vehicles list, the system automatically displays the associated client information for each vehicle, eliminating the need to look up ownership separately.
+</Accordion>
+
+## Common Tasks
+
+<Accordion title="How do I transfer a vehicle to a different client?">
+  Use the edit function to change the vehicle's associated client. Select the new owner from the **Cliente** dropdown and save your changes.
+</Accordion>
+
+<Accordion title="Can I add a vehicle without a client?">
+  No, every vehicle must be associated with a registered client. If you need to add a vehicle for someone not in the system, create their client record first.
+</Accordion>
+
+<Accordion title="What if I enter a duplicate license plate?">
+  The system will prevent you from saving a vehicle with a license plate that already exists in the database. Each license plate must be unique.
+</Accordion>
+
+<Accordion title="Can I see all vehicles for a specific client?">
+  Yes, client records are linked to their vehicles. The relationship allows you to view all vehicles owned by a particular client through the client management interface.
+</Accordion>

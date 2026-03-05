@@ -1,0 +1,474 @@
+---
+title: Technology Stack
+description: Complete breakdown of VIP2CARS technology stack including frameworks, libraries, and development tools
+---
+
+## Overview
+
+VIP2CARS is built with modern PHP and JavaScript technologies, leveraging the latest versions of Laravel and its ecosystem.
+
+## Backend Stack
+
+### Core Framework
+
+<Accordion title="Laravel 12">
+  **Version:** 12.0  
+  **License:** MIT  
+  **Package:** `laravel/framework`
+  
+  Laravel 12 is the latest major version of the PHP framework, providing:
+  - Modern PHP 8.2+ features
+  - Eloquent ORM for database management
+  - Blade templating engine
+  - Built-in authentication scaffolding
+  - Artisan CLI for development tasks
+  - Database migrations and seeding
+  - Middleware pipeline
+  - Service container and dependency injection
+</Accordion>
+
+### PHP Requirements
+
+<ResponseField name="PHP" type="^8.2" required>
+  Minimum PHP version 8.2 required for modern language features including:
+  - Readonly classes
+  - Disjunctive Normal Form (DNF) types
+  - Constants in traits
+  - Deprecation of dynamic properties
+</ResponseField>
+
+### Authentication & Security
+
+<Accordion title="Laravel Fortify 1.30">
+  **Package:** `laravel/fortify`  
+  **Purpose:** Backend authentication implementation
+  
+  Fortify provides the backend authentication logic including:
+  - User registration
+  - Login/logout
+  - Password reset
+  - Email verification
+  - Two-factor authentication (2FA)
+  - Profile management
+  
+  **Configuration:** `/app/Providers/FortifyServiceProvider.php`
+</Accordion>
+
+### Development Tools
+
+<Accordion title="Laravel Tinker 2.10">
+  **Package:** `laravel/tinker`
+  
+  Powerful REPL (Read-Eval-Print Loop) for:
+  - Interactive debugging
+  - Testing Eloquent queries
+  - Running code snippets
+  - Database inspection
+</Accordion>
+
+---
+
+## Frontend Stack
+
+### UI Framework
+
+<Accordion title="Livewire 4.0">
+  **Package:** `livewire/livewire`  
+  **Version:** 4.0
+  
+  Full-stack framework for building dynamic interfaces:
+  - Reactive components without JavaScript
+  - Real-time validation
+  - Server-side rendering
+  - Wire directives for interactivity
+  - Event dispatching and listening
+  - File uploads
+  - Component lifecycle hooks
+  
+  **Additional Livewire Packages:**
+  - `livewire/blaze` (1.0) - Performance optimization
+  - `livewire/flux` (2.9.0) - UI component library
+</Accordion>
+
+### Component Library
+
+<Accordion title="Flux UI 2.9">
+  **Package:** `livewire/flux`  
+  **Version:** 2.9.0
+  
+  Official Livewire UI component library providing:
+  - Pre-built, accessible components
+  - Consistent design system
+  - Form elements
+  - Navigation components
+  - Icons and graphics
+  - Modal dialogs
+  - Notifications
+  
+  **Custom Components Location:** `/resources/views/flux/`
+</Accordion>
+
+### CSS Framework
+
+<Accordion title="Tailwind CSS 4.0">
+  **Package:** `tailwindcss`  
+  **Version:** 4.0.7
+  
+  Utility-first CSS framework:
+  - Rapid UI development
+  - Just-in-time (JIT) compilation
+  - Custom design system
+  - Responsive design utilities
+  - Dark mode support
+  - Component extraction
+  
+  **Vite Integration:** `@tailwindcss/vite` (4.1.11)
+  
+  **Additional Tools:**
+  - `autoprefixer` (10.4.20) - CSS vendor prefixing
+  - `@tailwindcss/oxide-linux-x64-gnu` (4.0.1) - Optimized Rust engine
+</Accordion>
+
+### Build Tools
+
+<Accordion title="Vite 7.0">
+  **Package:** `vite`  
+  **Version:** 7.0.4
+  
+  Next-generation frontend tooling:
+  - Lightning-fast HMR (Hot Module Replacement)
+  - Optimized production builds
+  - ESM-based development server
+  - Plugin ecosystem
+  
+  **Laravel Integration:** `laravel-vite-plugin` (2.0)
+  
+  **Configuration:** `vite.config.js`
+  
+  ```javascript
+  import { defineConfig } from 'vite';
+  import laravel from 'laravel-vite-plugin';
+  
+  export default defineConfig({
+      plugins: [
+          laravel({
+              input: ['resources/css/app.css', 'resources/js/app.js'],
+              refresh: true,
+          }),
+      ],
+  });
+  ```
+</Accordion>
+
+### JavaScript Libraries
+
+<ResponseField name="Axios" type="1.7.4">
+  Promise-based HTTP client for browser requests
+  - API communication
+  - Request/response interceptors
+  - Automatic JSON transformation
+</ResponseField>
+
+---
+
+## Testing Stack
+
+### Testing Framework
+
+<Accordion title="Pest PHP 3.8">
+  **Package:** `pestphp/pest`  
+  **Version:** 3.8
+  
+  Modern PHP testing framework:
+  - Elegant syntax
+  - Parallel test execution
+  - Code coverage reporting
+  - Snapshot testing
+  - Time manipulation
+  
+  **Laravel Integration:** `pestphp/pest-plugin-laravel` (3.2)
+  
+  **Example Test:**
+  ```php
+  it('creates a cliente successfully', function () {
+      $response = $this->post('/clientes', [
+          'nombres' => 'John',
+          'apellidos' => 'Doe',
+          'nro_documento' => '12345678',
+          'correo' => 'john@example.com',
+          'telefono' => '123456789'
+      ]);
+      
+      $response->assertRedirect('/clientes');
+      $this->assertDatabaseHas('clientes', ['correo' => 'john@example.com']);
+  });
+  ```
+</Accordion>
+
+### Mock & Assertions
+
+<ResponseField name="Mockery" type="1.6">
+  PHP mock object framework for unit testing
+</ResponseField>
+
+<ResponseField name="Faker" type="1.23">
+  Generate fake data for testing and seeding
+  - `fakerphp/faker`
+</ResponseField>
+
+---
+
+## Code Quality Tools
+
+### Linting & Formatting
+
+<Accordion title="Laravel Pint 1.24">
+  **Package:** `laravel/pint`
+  
+  Opinionated PHP code style fixer:
+  - Based on PHP-CS-Fixer
+  - Zero configuration required
+  - Laravel coding standards
+  - Parallel processing
+  
+  **Configuration:** `pint.json`
+  
+  **Commands:**
+  ```bash
+  composer run lint        # Fix code style
+  composer run lint:check  # Check without fixing
+  ```
+</Accordion>
+
+### Error Handling
+
+<ResponseField name="Collision" type="8.6">
+  **Package:** `nunomaduro/collision`
+  
+  Beautiful error reporting for console:
+  - Detailed stack traces
+  - Code snippets
+  - Syntax highlighting
+  - Test failure formatting
+</ResponseField>
+
+---
+
+## Development Tools
+
+### Local Development
+
+<Accordion title="Laravel Sail 1.41">
+  **Package:** `laravel/sail`
+  
+  Docker-based development environment:
+  - Pre-configured Docker containers
+  - MySQL, PostgreSQL, Redis support
+  - Mailpit for email testing
+  - Node.js and NPM included
+  
+  **Commands:**
+  ```bash
+  ./vendor/bin/sail up    # Start containers
+  ./vendor/bin/sail down  # Stop containers
+  ```
+</Accordion>
+
+<Accordion title="Laravel Pail 1.2">
+  **Package:** `laravel/pail`
+  
+  Real-time log monitoring:
+  - Tail application logs
+  - Filter by level and channel
+  - Beautiful console output
+  - JSON log parsing
+  
+  **Usage:**
+  ```bash
+  php artisan pail
+  ```
+</Accordion>
+
+### Performance
+
+<ResponseField name="Laravel Boost" type="2.0">
+  **Package:** `laravel/boost`
+  
+  Performance optimization for Laravel applications
+  - Automatic optimizations
+  - Command: `php artisan boost:update`
+</ResponseField>
+
+### Process Management
+
+<ResponseField name="Concurrently" type="9.0.1">
+  Run multiple commands concurrently
+  
+  **Usage in package.json:**
+  ```json
+  "dev": "concurrently \"php artisan serve\" \"npm run dev\""
+  ```
+</ResponseField>
+
+---
+
+## Database
+
+### Supported Databases
+
+Laravel 12 supports multiple database systems:
+
+- **MySQL** (5.7+)
+- **PostgreSQL** (11+)
+- **SQLite** (3.35+)
+- **SQL Server** (2017+)
+- **MariaDB** (10.3+)
+
+<Info>
+  VIP2CARS can be configured to use any of these databases via the `.env` file.
+</Info>
+
+### Migration System
+
+Laravel's migration system provides:
+- Version control for database schema
+- Rollback capability
+- Database seeding
+- Schema builder with fluent API
+
+---
+
+## Production Optimizations
+
+### Rollup (Build)
+
+<ResponseField name="@rollup/rollup-linux-x64-gnu" type="4.9.5">
+  Optimized JavaScript bundler for production builds
+  - Native Linux binary for faster builds
+  - Tree-shaking for smaller bundles
+</ResponseField>
+
+### CSS Optimization
+
+<ResponseField name="lightningcss-linux-x64-gnu" type="1.29.1">
+  Extremely fast CSS parser and transformer
+  - Native Rust implementation
+  - CSS minification
+  - Vendor prefixing
+</ResponseField>
+
+---
+
+## Composer Scripts
+
+Automated development workflows:
+
+```json
+{
+  "setup": "Install dependencies and setup environment",
+  "dev": "Start development servers (app, queue, vite)",
+  "lint": "Fix code style issues",
+  "lint:check": "Check code style without fixing",
+  "test": "Run test suite with linting",
+  "ci:check": "Run CI checks"
+}
+```
+
+### Development Server
+
+```bash
+composer run dev
+```
+
+Starts three concurrent processes:
+1. **PHP Server** - `php artisan serve`
+2. **Queue Worker** - `php artisan queue:listen`
+3. **Vite Dev Server** - `npm run dev`
+
+<Note>
+  The `dev` script uses `concurrently` with color-coded output for each service.
+</Note>
+
+---
+
+## NPM Scripts
+
+```json
+{
+  "dev": "vite",
+  "build": "vite build"
+}
+```
+
+- **Development:** Real-time compilation with HMR
+- **Production:** Optimized, minified assets
+
+---
+
+## Version Summary
+
+### Core Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| Laravel Framework | ^12.0 | Core framework |
+| PHP | ^8.2 | Language runtime |
+| Livewire | ^4.0 | Full-stack framework |
+| Flux UI | ^2.9.0 | Component library |
+| Laravel Fortify | ^1.30 | Authentication |
+| Tailwind CSS | ^4.0 | CSS framework |
+| Vite | ^7.0 | Build tool |
+| Pest PHP | ^3.8 | Testing framework |
+
+### Development Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| Laravel Pint | ^1.24 | Code formatter |
+| Laravel Sail | ^1.41 | Docker environment |
+| Laravel Pail | ^1.2 | Log monitoring |
+| Faker | ^1.23 | Test data generation |
+| Mockery | ^1.6 | Mocking framework |
+
+---
+
+## System Requirements
+
+<Accordion title="Server Requirements">
+  - **PHP:** 8.2 or higher
+  - **Composer:** 2.x
+  - **Node.js:** 18.x or higher
+  - **NPM:** 9.x or higher
+  - **Database:** MySQL 5.7+, PostgreSQL 11+, or SQLite 3.35+
+  - **Extensions:**
+    - BCMath
+    - Ctype
+    - Fileinfo
+    - JSON
+    - Mbstring
+    - OpenSSL
+    - PDO
+    - Tokenizer
+    - XML
+</Accordion>
+
+<Accordion title="Development Environment">
+  - **Git:** Version control
+  - **Docker (optional):** For Laravel Sail
+  - **Redis (optional):** For caching and queues
+  - **Mailpit (optional):** For email testing
+</Accordion>
+
+---
+
+## License
+
+All packages are open-source with MIT license, ensuring:
+- Free commercial use
+- Modification rights
+- Distribution rights
+- Private use
+
+<Info>
+  The entire VIP2CARS stack is built on MIT-licensed software, making it freely usable for commercial projects.
+</Info>

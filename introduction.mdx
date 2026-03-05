@@ -1,0 +1,195 @@
+---
+title: Introduction to VIP2CARS
+description: A professional automotive client and vehicle management system built with Laravel 12, Livewire, and Flux UI
+---
+
+# VIP2CARS - Automotive Management System
+
+VIP2CARS is a professional-grade automotive client and vehicle management system designed to streamline the administration of customer data and their associated vehicles. Built with modern web technologies, it provides a robust, secure, and user-friendly interface for managing automotive business operations.
+
+## What is VIP2CARS?
+
+VIP2CARS (Vehicle Information Platform 2 Customer Automotive Records System) is a comprehensive Laravel-based application that enables automotive businesses to:
+
+- Manage client information with comprehensive contact details
+- Track vehicle records linked to specific clients
+- Maintain relationships between customers and their vehicles
+- Secure access through authentication and authorization
+- Generate technical documentation automatically
+
+<Note>
+The system enforces data integrity through cascading deletes - when a client is removed, all associated vehicles are automatically deleted to maintain database consistency.
+</Note>
+
+## Key Features
+
+### Client Management
+
+- **Complete Client Profiles**: Store client names, document numbers, email addresses, and phone numbers
+- **Unique Identification**: Enforce unique document numbers and email addresses
+- **CRUD Operations**: Full create, read, update, and delete functionality
+- **Data Validation**: Server-side validation ensures data integrity
+
+### Vehicle Management
+
+- **Comprehensive Vehicle Records**: Track license plates, brands, models, and manufacturing years
+- **Client Association**: Each vehicle is linked to a specific client
+- **Cascade Deletion**: Automatic cleanup of vehicle records when clients are deleted
+- **Unique License Plates**: System-enforced uniqueness for vehicle identification
+
+### Authentication & Security
+
+- **Laravel Fortify Integration**: Robust authentication system with registration, login, and password reset
+- **Email Verification**: Optional email verification for new accounts
+- **Two-Factor Authentication**: Enhanced security with 2FA support
+- **Protected Routes**: Middleware-based access control to sensitive areas
+- **Password Management**: Secure password hashing and update functionality
+
+### User Interface
+
+- **Flux UI Components**: Modern, accessible UI components from Livewire Flux
+- **Responsive Design**: Built with Tailwind CSS v4 for mobile-first responsiveness
+- **Dark Mode Support**: Built-in theme switching capability
+- **Real-time Updates**: Livewire enables reactive interfaces without page refreshes
+
+## Technology Stack
+
+### Backend Framework
+
+```json
+"php": "^8.2"
+"laravel/framework": "^12.0"
+"laravel/fortify": "^1.30"
+"livewire/livewire": "^4.0"
+```
+
+<Info>
+Laravel 12 is the latest major version, providing cutting-edge features, improved performance, and enhanced developer experience.
+</Info>
+
+### Frontend Stack
+
+```json
+"@tailwindcss/vite": "^4.1.11"
+"tailwindcss": "^4.0.7"
+"vite": "^7.0.4"
+"livewire/flux": "^2.9.0"
+```
+
+### Key Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|----------|
+| laravel/framework | ^12.0 | Core PHP framework |
+| laravel/fortify | ^1.30 | Authentication backend |
+| livewire/livewire | ^4.0 | Reactive components |
+| livewire/flux | ^2.9.0 | UI component library |
+| livewire/blaze | ^1.0 | Enhanced Livewire features |
+| tailwindcss | ^4.0.7 | Utility-first CSS framework |
+
+### Development Tools
+
+<CodeGroup>
+
+```json composer.json
+"require-dev": {
+  "laravel/pint": "^1.24",
+  "laravel/sail": "^1.41",
+  "pestphp/pest": "^3.8",
+  "laravel/pail": "^1.2.2"
+}
+```
+
+```json package.json
+"dependencies": {
+  "axios": "^1.7.4",
+  "concurrently": "^9.0.1",
+  "vite": "^7.0.4"
+}
+```
+
+</CodeGroup>
+
+## Architecture Overview
+
+### Database Schema
+
+VIP2CARS uses a relational database structure with two primary tables:
+
+**Clientes (Clients) Table:**
+- `id_cliente` - Primary key
+- `nombres` - First names
+- `apellidos` - Last names
+- `nro_documento` - Document number (unique)
+- `correo` - Email address (unique)
+- `telefono` - Phone number
+- `created_at`, `updated_at` - Timestamps
+
+**Vehiculos (Vehicles) Table:**
+- `id_vehiculo` - Primary key
+- `placa` - License plate (unique)
+- `marca` - Brand/Make
+- `modelo` - Model
+- `anio_fabricacion` - Manufacturing year
+- `id_cliente` - Foreign key to clientes table (cascade on delete)
+- `created_at`, `updated_at` - Timestamps
+
+### MVC Pattern
+
+The application follows Laravel's Model-View-Controller architecture:
+
+- **Models**: `Cliente.php`, `Vehiculo.php` with Eloquent relationships
+- **Controllers**: `ClienteController.php`, `VehiculoController.php` with RESTful methods
+- **Views**: Blade templates with Flux UI components
+
+<Tip>
+The system uses resource controllers, providing standard CRUD routes:
+- `GET /clientes` - List all clients
+- `POST /clientes` - Create new client
+- `GET /clientes/{id}/edit` - Edit form
+- `PUT /clientes/{id}` - Update client
+- `DELETE /clientes/{id}` - Delete client
+
+The same pattern applies to vehicles at `/vehiculos`.
+</Tip>
+
+## Use Cases
+
+VIP2CARS is ideal for:
+
+- **Auto Dealerships**: Track customer information and vehicle inventory
+- **Repair Shops**: Manage customer vehicles and service history
+- **Fleet Management**: Monitor vehicle assignments and ownership
+- **Rental Services**: Maintain customer and vehicle databases
+- **Auto Insurance**: Record client and vehicle details for policy management
+
+## System Requirements
+
+Before installation, ensure your system meets these requirements:
+
+- **PHP** >= 8.2 with required extensions
+- **Composer** for dependency management
+- **Node.js** and npm for frontend assets
+- **MySQL** or **MariaDB** database server
+- **Web Server** (Apache/Nginx) or use Laravel's built-in server
+- **Git** for version control
+
+<Warning>
+PHP 8.2 is the minimum required version. Earlier versions are not supported and will cause compatibility issues.
+</Warning>
+
+## Getting Started
+
+Ready to install VIP2CARS? Proceed to the [Installation Guide](/installation) for detailed setup instructions, or jump straight to the [Quick Start Guide](/quickstart) if you want to get up and running quickly.
+
+## Project Information
+
+- **License**: MIT
+- **Framework**: Laravel 12
+- **UI Library**: Livewire Flux
+- **Styling**: Tailwind CSS v4
+- **Repository**: Built on Laravel Livewire Starter Kit
+
+<Info>
+VIP2CARS is built with modern, actively maintained packages ensuring long-term support and regular security updates.
+</Info>

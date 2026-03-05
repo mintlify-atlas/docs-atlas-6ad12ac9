@@ -1,0 +1,155 @@
+---
+title: 'Vehiculo Model'
+description: 'Complete reference for the Vehiculo model - manages vehicle information and client relationships'
+---
+
+## Overview
+
+The `Vehiculo` model represents vehicles in the VIP2CARS system. It stores vehicle details such as license plate, make, model, and year, and maintains the relationship with the vehicle's owner (Cliente).
+
+## Database Configuration
+
+<ParamField path="table" type="string" default="vehiculos">
+  Database table name
+</ParamField>
+
+<ParamField path="primaryKey" type="string" default="id_vehiculo">
+  Primary key column name
+</ParamField>
+
+## Fillable Attributes
+
+The following attributes can be mass-assigned:
+
+<ParamField path="placa" type="string" required>
+  Vehicle's license plate number
+</ParamField>
+
+<ParamField path="marca" type="string" required>
+  Vehicle's brand/manufacturer (e.g., Toyota, Ford, Honda)
+</ParamField>
+
+<ParamField path="modelo" type="string" required>
+  Vehicle's model name
+</ParamField>
+
+<ParamField path="anio_fabricacion" type="numeric" required>
+  Year of manufacture (4-digit format)
+</ParamField>
+
+<ParamField path="id_cliente" type="integer" required>
+  Foreign key referencing the owner (Cliente)
+</ParamField>
+
+## Relationships
+
+### cliente()
+
+Defines a many-to-one relationship with the Cliente model. Each vehicle belongs to one client.
+
+**Relationship Type:** `belongsTo`
+
+**Related Model:** `App\Models\Cliente`
+
+**Foreign Key:** `id_cliente`
+
+**Owner Key:** `id_cliente`
+
+```php
+public function cliente()
+{
+    return $this->belongsTo(Cliente::class, 'id_cliente', 'id_cliente');
+}
+```
+
+## Usage Examples
+
+<CodeGroup>
+
+```php Create a Vehicle
+use App\Models\Vehiculo;
+
+$vehiculo = Vehiculo::create([
+    'placa' => 'ABC-123',
+    'marca' => 'Toyota',
+    'modelo' => 'Corolla',
+    'anio_fabricacion' => 2023,
+    'id_cliente' => 1,
+]);
+```
+
+```php Get Vehicle with Owner
+use App\Models\Vehiculo;
+
+$vehiculo = Vehiculo::with('cliente')->find($id);
+
+// Access vehicle owner information
+echo $vehiculo->cliente->nombres;
+echo $vehiculo->cliente->correo;
+```
+
+```php Update Vehicle
+use App\Models\Vehiculo;
+
+$vehiculo = Vehiculo::findOrFail($id);
+$vehiculo->update([
+    'placa' => 'XYZ-789',
+    'anio_fabricacion' => 2024,
+]);
+```
+
+```php Query Vehicles
+use App\Models\Vehiculo;
+
+// Get all vehicles with owners
+$vehiculos = Vehiculo::with('cliente')->get();
+
+// Find by license plate
+$vehiculo = Vehiculo::where('placa', 'ABC-123')->first();
+
+// Get vehicles by brand
+$toyotas = Vehiculo::where('marca', 'Toyota')->get();
+
+// Get vehicles manufactured after 2020
+$recent = Vehiculo::where('anio_fabricacion', '>=', 2020)->get();
+```
+
+</CodeGroup>
+
+## Model Source
+
+Location: `app/Models/Vehiculo.php`
+
+<Accordion title="View Full Model Source Code">
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Vehiculo extends Model
+{
+    protected $table = 'vehiculos';
+    protected $primaryKey = 'id_vehiculo';
+
+    protected $fillable = [
+        'placa',
+        'marca',
+        'modelo',
+        'anio_fabricacion',
+        'id_cliente',
+    ];
+
+    public function cliente()
+    {
+        return $this->belongsTo(Cliente::class, 'id_cliente', 'id_cliente');
+    }
+}
+```
+</Accordion>
+
+## Related Documentation
+
+- [Cliente Model](/development/models/cliente) - Related client model
+- [VehiculoController](/development/controllers#vehiculocontroller) - Controller handling vehicle operations

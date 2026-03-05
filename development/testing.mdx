@@ -1,0 +1,691 @@
+---
+title: Testing Guide
+description: Learn how to run tests and write new tests for VIP2CARS using Pest PHP, Laravel's testing framework.
+---
+
+VIP2CARS uses Pest PHP, a delightful testing framework built on top of PHPUnit, to ensure code quality and reliability. This guide covers everything you need to know about testing in the project.
+
+## Testing Stack
+
+VIP2CARS includes the following testing dependencies:
+
+- **Pest PHP 3.8** - Modern PHP testing framework
+- **Pest Laravel Plugin 3.2** - Laravel-specific testing utilities
+- **Mockery 1.6** - Mocking framework
+- **Collision 8.6** - Beautiful error reporting
+- **Laravel RefreshDatabase** - Database testing trait
+
+## Test Configuration
+
+The test environment is configured in `phpunit.xml`:
+
+```xml phpunit.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+    </php>
+</phpunit>
+```
+
+<Note>
+  Tests use an in-memory SQLite database by default, ensuring fast execution and isolation between test runs.
+</Note>
+
+## Running Tests
+
+VIP2CARS provides several ways to run your test suite.
+
+### Basic Test Execution
+
+```bash
+# Run all tests
+php artisan test
+
+# Run all tests with Pest directly
+./vendor/bin/pest
+
+# Run tests in parallel (faster)
+./vendor/bin/pest --parallel
+```
+
+### Running Specific Tests
+
+```bash
+# Run a specific test file
+php artisan test tests/Feature/ClienteTest.php
+
+# Run a specific test suite
+php artisan test --testsuite=Feature
+php artisan test --testsuite=Unit
+
+# Run tests matching a filter
+php artisan test --filter=cliente
+```
+
+### Using Composer Scripts
+
+VIP2CARS includes convenient composer scripts:
+
+```bash
+# Run full test suite (includes linting)
+composer test
+
+# Just run tests without linting
+php artisan test
+
+# Run CI checks (clears config, lints, tests)
+composer ci:check
+```
+
+<Tip>
+  Use `composer test` before committing to ensure your code passes both style checks and tests.
+</Tip>
+
+## Test Structure
+
+VIP2CARS organizes tests into two categories:
+
+### Feature Tests
+
+Located in `tests/Feature/`, these test complete features and user workflows:
+
+```
+tests/Feature/
+├── Auth/
+│   ├── AuthenticationTest.php
+│   ├── RegistrationTest.php
+│   ├── PasswordResetTest.php
+│   └── ...
+├── Settings/
+│   ├── ProfileUpdateTest.php
+│   └── PasswordUpdateTest.php
+├── DashboardTest.php
+└── ExampleTest.php
+```
+
+### Unit Tests
+
+Located in `tests/Unit/`, these test individual classes and methods in isolation:
+
+```
+tests/Unit/
+└── ExampleTest.php
+```
+
+## Pest Configuration
+
+The `tests/Pest.php` file configures Pest behavior:
+
+```php tests/Pest.php
+<?php
+
+pest()->extend(Tests\TestCase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->in('Feature');
+
+// Custom expectations
+expect()->extend('toBeOne', function () {
+    return $this->toBe(1);
+});
+
+// Helper functions
+function something()
+{
+    // Custom test helpers
+}
+```
+
+<Note>
+  The `RefreshDatabase` trait automatically migrates the database before each test and rolls back after, ensuring a clean state.
+</Note>
+
+## Writing Tests
+
+### Basic Feature Test
+
+Here's a simple test example from VIP2CARS:
+
+```php tests/Feature/ExampleTest.php
+<?php
+
+test('returns a successful response', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+});
+```
+
+### Unit Test Example
+
+```php tests/Unit/ExampleTest.php
+<?php
+
+test('that true is true', function () {
+    expect(true)->toBeTrue();
+});
+```
+
+### Testing Cliente CRUD Operations
+
+Create comprehensive tests for the Cliente resource:
+
+```php tests/Feature/ClienteTest.php
+<?php
+
+use App\Models\Cliente;
+use App\Models\User;
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+});
+
+test('authenticated user can view clientes list', function () {
+    $response = $this->actingAs($this->user)
+        ->get(route('clientes.index'));
+
+    $response->assertOk()
+        ->assertViewIs('clientes.index');
+});
+
+test('guest cannot view clientes list', function () {
+    $response = $this->get(route('clientes.index'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('can create a new cliente', function () {
+    $clienteData = [
+        'nombres' => 'Juan',
+        'apellidos' => 'Pérez',
+        'nro_documento' => '12345678',
+        'correo' => 'juan@example.com',
+        'telefono' => '987654321',
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->post(route('clientes.store'), $clienteData);
+
+    $response->assertRedirect(route('clientes.index'))
+        ->assertSessionHas('success');
+
+    $this->assertDatabaseHas('clientes', [
+        'correo' => 'juan@example.com',
+    ]);
+});
+
+test('cliente validation fails with invalid data', function () {
+    $response = $this->actingAs($this->user)
+        ->post(route('clientes.store'), [
+            'nombres' => '',
+            'correo' => 'invalid-email',
+        ]);
+
+    $response->assertSessionHasErrors(['nombres', 'correo', 'apellidos']);
+});
+
+test('cannot create cliente with duplicate email', function () {
+    $cliente = Cliente::factory()->create([
+        'correo' => 'duplicate@example.com',
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('clientes.store'), [
+            'nombres' => 'Test',
+            'apellidos' => 'User',
+            'nro_documento' => '87654321',
+            'correo' => 'duplicate@example.com',
+            'telefono' => '912345678',
+        ]);
+
+    $response->assertSessionHasErrors(['correo']);
+});
+
+test('can update a cliente', function () {
+    $cliente = Cliente::factory()->create();
+
+    $updateData = [
+        'nombres' => 'Updated Name',
+        'apellidos' => $cliente->apellidos,
+        'nro_documento' => $cliente->nro_documento,
+        'correo' => $cliente->correo,
+        'telefono' => $cliente->telefono,
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->put(route('clientes.update', $cliente->id_cliente), $updateData);
+
+    $response->assertRedirect(route('clientes.index'));
+
+    $this->assertDatabaseHas('clientes', [
+        'id_cliente' => $cliente->id_cliente,
+        'nombres' => 'Updated Name',
+    ]);
+});
+
+test('can delete a cliente', function () {
+    $cliente = Cliente::factory()->create();
+
+    $response = $this->actingAs($this->user)
+        ->delete(route('clientes.destroy', $cliente->id_cliente));
+
+    $response->assertRedirect(route('clientes.index'));
+
+    $this->assertDatabaseMissing('clientes', [
+        'id_cliente' => $cliente->id_cliente,
+    ]);
+});
+```
+
+<Note>
+  You'll need to create a `ClienteFactory` first. See the [Extending Guide](/development/extending) for factory creation.
+</Note>
+
+### Testing Relationships
+
+Test Eloquent relationships between models:
+
+```php tests/Unit/Models/ClienteTest.php
+<?php
+
+use App\Models\Cliente;
+use App\Models\Vehiculo;
+
+test('cliente has many vehiculos', function () {
+    $cliente = Cliente::factory()->create();
+    $vehiculo = Vehiculo::factory()->create([
+        'id_cliente' => $cliente->id_cliente,
+    ]);
+
+    expect($cliente->vehiculos)->toHaveCount(1);
+    expect($cliente->vehiculos->first()->id_vehiculo)
+        ->toBe($vehiculo->id_vehiculo);
+});
+
+test('deleting cliente cascades to vehiculos', function () {
+    $cliente = Cliente::factory()->create();
+    $vehiculo = Vehiculo::factory()->create([
+        'id_cliente' => $cliente->id_cliente,
+    ]);
+
+    $cliente->delete();
+
+    $this->assertDatabaseMissing('vehiculos', [
+        'id_vehiculo' => $vehiculo->id_vehiculo,
+    ]);
+});
+```
+
+## Pest Assertions and Expectations
+
+### HTTP Response Assertions
+
+```php
+// Status codes
+$response->assertOk();              // 200
+$response->assertCreated();         // 201
+$response->assertNoContent();       // 204
+$response->assertNotFound();        // 404
+$response->assertForbidden();       // 403
+$response->assertUnauthorized();    // 401
+
+// Redirects
+$response->assertRedirect($uri);
+$response->assertRedirectToRoute('clientes.index');
+
+// Views
+$response->assertViewIs('clientes.index');
+$response->assertViewHas('clientes');
+
+// Session
+$response->assertSessionHas('success');
+$response->assertSessionHasErrors(['email']);
+```
+
+### Database Assertions
+
+```php
+// Check record exists
+$this->assertDatabaseHas('clientes', [
+    'correo' => 'test@example.com',
+]);
+
+// Check record doesn't exist
+$this->assertDatabaseMissing('clientes', [
+    'id_cliente' => 999,
+]);
+
+// Count records
+$this->assertDatabaseCount('clientes', 5);
+```
+
+### Pest Expectations
+
+```php
+// Values
+expect($value)->toBe(10);
+expect($value)->toEqual($expected);
+expect($value)->toBeTrue();
+expect($value)->toBeFalse();
+expect($value)->toBeNull();
+expect($value)->toBeEmpty();
+
+// Types
+expect($value)->toBeString();
+expect($value)->toBeInt();
+expect($value)->toBeFloat();
+expect($value)->toBeArray();
+expect($value)->toBeObject();
+
+// Collections
+expect($array)->toHaveCount(3);
+expect($array)->toContain('value');
+expect($collection)->toHaveKey('key');
+
+// Strings
+expect($string)->toContain('substring');
+expect($string)->toStartWith('prefix');
+expect($string)->toEndWith('suffix');
+expect($string)->toMatch('/regex/');
+
+// Numbers
+expect($number)->toBeGreaterThan(5);
+expect($number)->toBeLessThan(10);
+expect($number)->toBeBetween(1, 100);
+```
+
+## Test Organization
+
+### Using beforeEach and afterEach
+
+```php
+beforeEach(function () {
+    // Runs before each test
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
+});
+
+afterEach(function () {
+    // Runs after each test
+    // Cleanup if needed
+});
+
+test('example test', function () {
+    // $this->user is available here
+});
+```
+
+### Grouping Tests
+
+```php
+describe('Cliente Management', function () {
+    beforeEach(function () {
+        $this->user = User::factory()->create();
+    });
+
+    it('can create a cliente', function () {
+        // Test implementation
+    });
+
+    it('can update a cliente', function () {
+        // Test implementation
+    });
+
+    it('can delete a cliente', function () {
+        // Test implementation
+    });
+});
+```
+
+### Skipping Tests
+
+```php
+// Skip a test
+test('incomplete feature', function () {
+    //
+})->skip();
+
+// Skip with reason
+test('requires external API', function () {
+    //
+})->skip('API not available in testing');
+
+// Skip conditionally
+test('windows only feature', function () {
+    //
+})->skip(PHP_OS !== 'WINNT', 'Only runs on Windows');
+```
+
+## Testing Best Practices
+
+<Accordion title="Write Descriptive Test Names">
+  Test names should clearly describe what they test:
+
+  ```php
+  // Good
+  test('authenticated user can create a cliente')
+  test('validation fails when email is invalid')
+  test('deleting cliente cascades to related vehiculos')
+
+  // Avoid
+  test('test create')
+  test('test 1')
+  test('it works')
+  ```
+</Accordion>
+
+<Accordion title="Follow the AAA Pattern">
+  Structure tests with Arrange, Act, Assert:
+
+  ```php
+  test('can create cliente', function () {
+      // Arrange - Set up test data
+      $user = User::factory()->create();
+      $data = ['nombres' => 'Juan', ...];
+
+      // Act - Perform the action
+      $response = $this->actingAs($user)
+          ->post(route('clientes.store'), $data);
+
+      // Assert - Verify the results
+      $response->assertRedirect();
+      $this->assertDatabaseHas('clientes', ['nombres' => 'Juan']);
+  });
+  ```
+</Accordion>
+
+<Accordion title="Test One Thing Per Test">
+  Each test should verify a single behavior:
+
+  ```php
+  // Good - Separate tests
+  test('validates required nombres field');
+  test('validates email format');
+  test('validates unique email constraint');
+
+  // Avoid - Testing multiple things
+  test('validates all cliente fields'); // Too broad
+  ```
+</Accordion>
+
+<Accordion title="Use Factories for Test Data">
+  Factories provide flexible, reusable test data:
+
+  ```php
+  // Good - Using factories
+  $cliente = Cliente::factory()->create();
+  $clientes = Cliente::factory()->count(10)->create();
+
+  // Avoid - Manual creation
+  $cliente = Cliente::create([
+      'nombres' => 'Test',
+      'apellidos' => 'User',
+      // ... lots of required fields
+  ]);
+  ```
+</Accordion>
+
+## Testing Coverage
+
+Generate code coverage reports:
+
+```bash
+# Generate coverage report (requires Xdebug or PCOV)
+./vendor/bin/pest --coverage
+
+# Generate HTML coverage report
+./vendor/bin/pest --coverage-html=coverage
+
+# Set minimum coverage threshold
+./vendor/bin/pest --coverage --min=80
+```
+
+<Tip>
+  Aim for high test coverage, especially for:
+  - Controllers (all CRUD operations)
+  - Models (relationships and custom methods)
+  - Validation rules
+  - Business logic
+  - Authentication and authorization
+</Tip>
+
+## Debugging Tests
+
+### Using dd() and dump()
+
+```php
+test('debugging example', function () {
+    $cliente = Cliente::factory()->create();
+    
+    dd($cliente);  // Die and dump
+    dump($cliente); // Dump and continue
+});
+```
+
+### Verbose Output
+
+```bash
+# Show detailed test output
+php artisan test --verbose
+
+# Show even more details
+php artisan test -vvv
+```
+
+### Running Single Test
+
+```bash
+# Run specific test by name
+php artisan test --filter="can create a cliente"
+
+# Run with stop-on-failure
+php artisan test --stop-on-failure
+```
+
+## Continuous Integration
+
+VIP2CARS includes a CI script:
+
+```bash
+# Run CI checks
+composer ci:check
+```
+
+This runs:
+1. `php artisan config:clear` - Clear configuration cache
+2. `pint --parallel --test` - Check code style
+3. `php artisan test` - Run test suite
+
+<Note>
+  All tests must pass before merging code. The CI pipeline enforces this in GitHub Actions.
+</Note>
+
+## Common Testing Scenarios
+
+### Testing Authentication
+
+```php
+test('guest is redirected to login', function () {
+    $response = $this->get(route('clientes.index'));
+    $response->assertRedirect(route('login'));
+});
+
+test('authenticated user can access dashboard', function () {
+    $user = User::factory()->create();
+    
+    $response = $this->actingAs($user)
+        ->get(route('dashboard'));
+        
+    $response->assertOk();
+});
+```
+
+### Testing Validation
+
+```php
+test('validates required fields', function () {
+    $response = $this->actingAs(User::factory()->create())
+        ->post(route('clientes.store'), []);
+
+    $response->assertSessionHasErrors([
+        'nombres',
+        'apellidos',
+        'nro_documento',
+        'correo',
+        'telefono',
+    ]);
+});
+```
+
+### Testing File Uploads
+
+```php
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+
+test('can upload document', function () {
+    Storage::fake('public');
+    
+    $file = UploadedFile::fake()->create('document.pdf', 100);
+    
+    $response = $this->actingAs(User::factory()->create())
+        ->post(route('documents.store'), [
+            'file' => $file,
+        ]);
+    
+    Storage::disk('public')->assertExists('documents/' . $file->hashName());
+});
+```
+
+## Next Steps
+
+Now that you understand testing in VIP2CARS:
+
+1. Write tests for new features before implementing them (TDD)
+2. Ensure all existing tests pass: `composer test`
+3. Maintain high test coverage on critical paths
+4. Review the [Contributing Guidelines](/development/contributing) for code quality standards
+
+For guidance on extending VIP2CARS functionality, see the [Extending Guide](/development/extending).

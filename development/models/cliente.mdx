@@ -1,0 +1,153 @@
+---
+title: 'Cliente Model'
+description: 'Complete reference for the Cliente model - manages client information and relationships'
+---
+
+## Overview
+
+The `Cliente` model represents clients in the VIP2CARS system. It handles client information including personal details, contact information, and manages the relationship with their vehicles.
+
+## Database Configuration
+
+<ParamField path="table" type="string" default="clientes">
+  Database table name
+</ParamField>
+
+<ParamField path="primaryKey" type="string" default="id_cliente">
+  Primary key column name
+</ParamField>
+
+## Fillable Attributes
+
+The following attributes can be mass-assigned:
+
+<ParamField path="nombres" type="string" required>
+  Client's first name(s)
+</ParamField>
+
+<ParamField path="apellidos" type="string" required>
+  Client's last name(s)
+</ParamField>
+
+<ParamField path="nro_documento" type="string" required>
+  Client's document number (ID card, passport, etc.)
+</ParamField>
+
+<ParamField path="correo" type="string" required>
+  Client's email address
+</ParamField>
+
+<ParamField path="telefono" type="string" required>
+  Client's phone number
+</ParamField>
+
+## Relationships
+
+### vehiculos()
+
+Defines a one-to-many relationship with the Vehiculo model. A client can have multiple vehicles.
+
+**Relationship Type:** `hasMany`
+
+**Related Model:** `App\Models\Vehiculo`
+
+**Foreign Key:** `id_cliente`
+
+**Local Key:** `id_cliente`
+
+```php
+public function vehiculos()
+{
+    return $this->hasMany(Vehiculo::class, 'id_cliente', 'id_cliente');
+}
+```
+
+## Usage Examples
+
+<CodeGroup>
+
+```php Create a Client
+use App\Models\Cliente;
+
+$cliente = Cliente::create([
+    'nombres' => 'Juan Carlos',
+    'apellidos' => 'Pérez García',
+    'nro_documento' => '12345678',
+    'correo' => 'juan.perez@example.com',
+    'telefono' => '+51987654321',
+]);
+```
+
+```php Get Client with Vehicles
+use App\Models\Cliente;
+
+$cliente = Cliente::with('vehiculos')->find($id);
+
+// Access client's vehicles
+foreach ($cliente->vehiculos as $vehiculo) {
+    echo $vehiculo->placa;
+}
+```
+
+```php Update Client
+use App\Models\Cliente;
+
+$cliente = Cliente::findOrFail($id);
+$cliente->update([
+    'telefono' => '+51999888777',
+    'correo' => 'new.email@example.com',
+]);
+```
+
+```php Query Clients
+use App\Models\Cliente;
+
+// Get all clients
+$clientes = Cliente::all();
+
+// Find by document number
+$cliente = Cliente::where('nro_documento', '12345678')->first();
+
+// Get clients with vehicle count
+$clientes = Cliente::withCount('vehiculos')->get();
+```
+
+</CodeGroup>
+
+## Model Source
+
+Location: `app/Models/Cliente.php`
+
+<Accordion title="View Full Model Source Code">
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Cliente extends Model
+{
+    protected $table = 'clientes';
+    protected $primaryKey = 'id_cliente';
+    
+    protected $fillable = [
+        'nombres',
+        'apellidos',
+        'nro_documento',
+        'correo',
+        'telefono',
+    ];
+
+    public function vehiculos()
+    {
+        return $this->hasMany(Vehiculo::class, 'id_cliente', 'id_cliente');
+    }
+}
+```
+</Accordion>
+
+## Related Documentation
+
+- [Vehiculo Model](/development/models/vehiculo) - Related vehicle model
+- [ClienteController](/development/controllers#clientecontroller) - Controller handling client operations

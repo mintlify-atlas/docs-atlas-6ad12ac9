@@ -1,0 +1,582 @@
+---
+title: 'Controllers Reference'
+description: 'Complete documentation for ClienteController and VehiculoController with all methods, validation rules, and return types'
+---
+
+## Overview
+
+This page documents the main controllers for managing clients and vehicles in the VIP2CARS system. Both controllers follow Laravel's resource controller pattern with standard CRUD operations.
+
+---
+
+## ClienteController
+
+**Namespace:** `App\Http\Controllers`
+
+**Location:** `app/Http/Controllers/ClienteController.php`
+
+Handles all client-related operations including creating, reading, updating, and deleting client records.
+
+### Methods
+
+#### index()
+
+Display a listing of all clients.
+
+**Signature:**
+```php
+public function index()
+```
+
+**Returns:** View `clientes.index` with all clients
+
+**Implementation:**
+```php
+public function index()
+{
+    $clientes = \App\Models\Cliente::all();
+    return view('clientes.index', compact('clientes'));
+}
+```
+
+---
+
+#### create()
+
+Show the form for creating a new client.
+
+**Signature:**
+```php
+public function create()
+```
+
+**Returns:** View `clientes.create`
+
+**Implementation:**
+```php
+public function create()
+{
+    return view('clientes.create');
+}
+```
+
+---
+
+#### store()
+
+Store a newly created client in the database.
+
+**Signature:**
+```php
+public function store(Request $request)
+```
+
+**Parameters:**
+<ParamField path="request" type="Request" required>
+  HTTP request containing client data
+</ParamField>
+
+**Validation Rules:**
+
+<ResponseField name="nombres" type="string" required>
+  - **Rules:** `required|string|max:255`
+  - Client's first name(s)
+</ResponseField>
+
+<ResponseField name="apellidos" type="string" required>
+  - **Rules:** `required|string|max:255`
+  - Client's last name(s)
+</ResponseField>
+
+<ResponseField name="nro_documento" type="string" required>
+  - **Rules:** `required|string|unique:clientes,nro_documento`
+  - Document number (must be unique)
+</ResponseField>
+
+<ResponseField name="correo" type="string" required>
+  - **Rules:** `required|email|unique:clientes,correo`
+  - Email address (must be valid and unique)
+</ResponseField>
+
+<ResponseField name="telefono" type="string" required>
+  - **Rules:** `required|string|max:20`
+  - Phone number
+</ResponseField>
+
+**Returns:** Redirect to `clientes.index` with success message
+
+**Implementation:**
+```php
+public function store(Request $request)
+{
+    $data = $request->validate([
+        'nombres' => 'required|string|max:255',
+        'apellidos' => 'required|string|max:255',
+        'nro_documento' => 'required|string|unique:clientes,nro_documento',
+        'correo' => 'required|email|unique:clientes,correo',
+        'telefono' => 'required|string|max:20',
+    ]);
+
+    \App\Models\Cliente::create($data);
+
+    return redirect()->route('clientes.index')->with('success', 'Cliente creado correctamente.');
+}
+```
+
+---
+
+#### show()
+
+Display the specified client.
+
+**Signature:**
+```php
+public function show(string $id)
+```
+
+**Parameters:**
+<ParamField path="id" type="string" required>
+  Client ID (id_cliente)
+</ParamField>
+
+**Returns:** View `clientes.show` with client data
+
+**Throws:** `ModelNotFoundException` if client not found
+
+**Implementation:**
+```php
+public function show(string $id)
+{
+    $cliente = \App\Models\Cliente::findOrFail($id);
+    return view('clientes.show', compact('cliente'));
+}
+```
+
+---
+
+#### edit()
+
+Show the form for editing the specified client.
+
+**Signature:**
+```php
+public function edit(string $id)
+```
+
+**Parameters:**
+<ParamField path="id" type="string" required>
+  Client ID (id_cliente)
+</ParamField>
+
+**Returns:** View `clientes.edit` with client data
+
+**Throws:** `ModelNotFoundException` if client not found
+
+**Implementation:**
+```php
+public function edit(string $id)
+{
+    $cliente = \App\Models\Cliente::findOrFail($id);
+    return view('clientes.edit', compact('cliente'));
+}
+```
+
+---
+
+#### update()
+
+Update the specified client in the database.
+
+**Signature:**
+```php
+public function update(Request $request, string $id)
+```
+
+**Parameters:**
+<ParamField path="request" type="Request" required>
+  HTTP request containing updated client data
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  Client ID (id_cliente)
+</ParamField>
+
+**Validation Rules:**
+
+<ResponseField name="nombres" type="string" required>
+  - **Rules:** `required|string|max:255`
+</ResponseField>
+
+<ResponseField name="apellidos" type="string" required>
+  - **Rules:** `required|string|max:255`
+</ResponseField>
+
+<ResponseField name="nro_documento" type="string" required>
+  - **Rules:** `required|string|unique:clientes,nro_documento,{id},id_cliente`
+  - Unique except for current client
+</ResponseField>
+
+<ResponseField name="correo" type="string" required>
+  - **Rules:** `required|email|unique:clientes,correo,{id},id_cliente`
+  - Unique except for current client
+</ResponseField>
+
+<ResponseField name="telefono" type="string" required>
+  - **Rules:** `required|string|max:20`
+</ResponseField>
+
+**Returns:** Redirect to `clientes.index` with success message
+
+**Throws:** `ModelNotFoundException` if client not found
+
+**Implementation:**
+```php
+public function update(Request $request, string $id)
+{
+    $cliente = \App\Models\Cliente::findOrFail($id);
+    
+    $data = $request->validate([
+        'nombres' => 'required|string|max:255',
+        'apellidos' => 'required|string|max:255',
+        'nro_documento' => 'required|string|unique:clientes,nro_documento,'.$id.',id_cliente',
+        'correo' => 'required|email|unique:clientes,correo,'.$id.',id_cliente',
+        'telefono' => 'required|string|max:20',
+    ]);
+
+    $cliente->update($data);
+
+    return redirect()->route('clientes.index')->with('success', 'Cliente actualizado correctamente.');
+}
+```
+
+---
+
+#### destroy()
+
+Remove the specified client from the database.
+
+**Signature:**
+```php
+public function destroy(string $id)
+```
+
+**Parameters:**
+<ParamField path="id" type="string" required>
+  Client ID (id_cliente)
+</ParamField>
+
+**Returns:** Redirect to `clientes.index` with success message
+
+**Throws:** `ModelNotFoundException` if client not found
+
+**Implementation:**
+```php
+public function destroy(string $id)
+{
+    $cliente = \App\Models\Cliente::findOrFail($id);
+    $cliente->delete();
+
+    return redirect()->route('clientes.index')->with('success', 'Cliente eliminado correctamente.');
+}
+```
+
+---
+
+## VehiculoController
+
+**Namespace:** `App\Http\Controllers`
+
+**Location:** `app/Http/Controllers/VehiculoController.php`
+
+Handles all vehicle-related operations including creating, reading, updating, and deleting vehicle records.
+
+### Methods
+
+#### index()
+
+Display a listing of all vehicles with their owner information.
+
+**Signature:**
+```php
+public function index()
+```
+
+**Returns:** View `vehiculos.index` with all vehicles (eager-loaded with cliente relationship)
+
+**Implementation:**
+```php
+public function index()
+{
+    $vehiculos = \App\Models\Vehiculo::with('cliente')->get();
+    return view('vehiculos.index', compact('vehiculos'));
+}
+```
+
+---
+
+#### create()
+
+Show the form for creating a new vehicle.
+
+**Signature:**
+```php
+public function create()
+```
+
+**Returns:** View `vehiculos.create` with list of all clients
+
+**Implementation:**
+```php
+public function create()
+{
+    $clientes = \App\Models\Cliente::all();
+    return view('vehiculos.create', compact('clientes'));
+}
+```
+
+---
+
+#### store()
+
+Store a newly created vehicle in the database.
+
+**Signature:**
+```php
+public function store(Request $request)
+```
+
+**Parameters:**
+<ParamField path="request" type="Request" required>
+  HTTP request containing vehicle data
+</ParamField>
+
+**Validation Rules:**
+
+<ResponseField name="placa" type="string" required>
+  - **Rules:** `required|string|unique:vehiculos,placa`
+  - License plate (must be unique)
+</ResponseField>
+
+<ResponseField name="marca" type="string" required>
+  - **Rules:** `required|string|max:255`
+  - Vehicle brand/manufacturer
+</ResponseField>
+
+<ResponseField name="modelo" type="string" required>
+  - **Rules:** `required|string|max:255`
+  - Vehicle model
+</ResponseField>
+
+<ResponseField name="anio_fabricacion" type="numeric" required>
+  - **Rules:** `required|numeric|digits:4`
+  - Year of manufacture (must be 4 digits)
+</ResponseField>
+
+<ResponseField name="id_cliente" type="integer" required>
+  - **Rules:** `required|exists:clientes,id_cliente`
+  - Must reference an existing client
+</ResponseField>
+
+**Returns:** Redirect to `vehiculos.index` with success message
+
+**Implementation:**
+```php
+public function store(Request $request)
+{
+    $data = $request->validate([
+        'placa' => 'required|string|unique:vehiculos,placa',
+        'marca' => 'required|string|max:255',
+        'modelo' => 'required|string|max:255',
+        'anio_fabricacion' => 'required|numeric|digits:4',
+        'id_cliente' => 'required|exists:clientes,id_cliente',
+    ]);
+
+    \App\Models\Vehiculo::create($data);
+
+    return redirect()->route('vehiculos.index')->with('success', 'Vehículo creado correctamente.');
+}
+```
+
+---
+
+#### show()
+
+Display the specified vehicle with owner information.
+
+**Signature:**
+```php
+public function show(string $id)
+```
+
+**Parameters:**
+<ParamField path="id" type="string" required>
+  Vehicle ID (id_vehiculo)
+</ParamField>
+
+**Returns:** View `vehiculos.show` with vehicle data (eager-loaded with cliente relationship)
+
+**Throws:** `ModelNotFoundException` if vehicle not found
+
+**Implementation:**
+```php
+public function show(string $id)
+{
+    $vehiculo = \App\Models\Vehiculo::with('cliente')->findOrFail($id);
+    return view('vehiculos.show', compact('vehiculo'));
+}
+```
+
+---
+
+#### edit()
+
+Show the form for editing the specified vehicle.
+
+**Signature:**
+```php
+public function edit(string $id)
+```
+
+**Parameters:**
+<ParamField path="id" type="string" required>
+  Vehicle ID (id_vehiculo)
+</ParamField>
+
+**Returns:** View `vehiculos.edit` with vehicle data and list of all clients
+
+**Throws:** `ModelNotFoundException` if vehicle not found
+
+**Implementation:**
+```php
+public function edit(string $id)
+{
+    $vehiculo = \App\Models\Vehiculo::findOrFail($id);
+    $clientes = \App\Models\Cliente::all();
+    return view('vehiculos.edit', compact('vehiculo', 'clientes'));
+}
+```
+
+---
+
+#### update()
+
+Update the specified vehicle in the database.
+
+**Signature:**
+```php
+public function update(Request $request, string $id)
+```
+
+**Parameters:**
+<ParamField path="request" type="Request" required>
+  HTTP request containing updated vehicle data
+</ParamField>
+
+<ParamField path="id" type="string" required>
+  Vehicle ID (id_vehiculo)
+</ParamField>
+
+**Validation Rules:**
+
+<ResponseField name="placa" type="string" required>
+  - **Rules:** `required|string|unique:vehiculos,placa,{id},id_vehiculo`
+  - Unique except for current vehicle
+</ResponseField>
+
+<ResponseField name="marca" type="string" required>
+  - **Rules:** `required|string|max:255`
+</ResponseField>
+
+<ResponseField name="modelo" type="string" required>
+  - **Rules:** `required|string|max:255`
+</ResponseField>
+
+<ResponseField name="anio_fabricacion" type="numeric" required>
+  - **Rules:** `required|numeric|digits:4`
+</ResponseField>
+
+<ResponseField name="id_cliente" type="integer" required>
+  - **Rules:** `required|exists:clientes,id_cliente`
+</ResponseField>
+
+**Returns:** Redirect to `vehiculos.index` with success message
+
+**Throws:** `ModelNotFoundException` if vehicle not found
+
+**Implementation:**
+```php
+public function update(Request $request, string $id)
+{
+    $vehiculo = \App\Models\Vehiculo::findOrFail($id);
+    
+    $data = $request->validate([
+        'placa' => 'required|string|unique:vehiculos,placa,'.$id.',id_vehiculo',
+        'marca' => 'required|string|max:255',
+        'modelo' => 'required|string|max:255',
+        'anio_fabricacion' => 'required|numeric|digits:4',
+        'id_cliente' => 'required|exists:clientes,id_cliente',
+    ]);
+
+    $vehiculo->update($data);
+
+    return redirect()->route('vehiculos.index')->with('success', 'Vehículo actualizado correctamente.');
+}
+```
+
+---
+
+#### destroy()
+
+Remove the specified vehicle from the database.
+
+**Signature:**
+```php
+public function destroy(string $id)
+```
+
+**Parameters:**
+<ParamField path="id" type="string" required>
+  Vehicle ID (id_vehiculo)
+</ParamField>
+
+**Returns:** Redirect to `vehiculos.index` with success message
+
+**Throws:** `ModelNotFoundException` if vehicle not found
+
+**Implementation:**
+```php
+public function destroy(string $id)
+{
+    $vehiculo = \App\Models\Vehiculo::findOrFail($id);
+    $vehiculo->delete();
+
+    return redirect()->route('vehiculos.index')->with('success', 'Vehículo eliminado correctamente.');
+}
+```
+
+---
+
+## Common Patterns
+
+<Accordion title="Error Handling">
+Both controllers use `findOrFail()` which automatically throws a `ModelNotFoundException` (404 error) when a record is not found. Laravel handles this exception and returns a 404 page.
+</Accordion>
+
+<Accordion title="Flash Messages">
+All create, update, and delete operations redirect with a success flash message that can be displayed to users:
+- `'Cliente creado correctamente.'`
+- `'Cliente actualizado correctamente.'`
+- `'Cliente eliminado correctamente.'`
+- `'Vehículo creado correctamente.'`
+- `'Vehículo actualizado correctamente.'`
+- `'Vehículo eliminado correctamente.'`
+</Accordion>
+
+<Accordion title="Eager Loading">
+The VehiculoController uses eager loading with `with('cliente')` to avoid N+1 query problems when displaying vehicle lists with owner information.
+</Accordion>
+
+## Related Documentation
+
+- [Cliente Model](/development/models/cliente) - Cliente model reference
+- [Vehiculo Model](/development/models/vehiculo) - Vehiculo model reference

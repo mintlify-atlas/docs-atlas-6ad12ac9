@@ -1,0 +1,498 @@
+---
+title: Extending VIP2CARS
+description: Learn how to extend VIP2CARS with new models, controllers, routes, and migrations to add custom functionality.
+---
+
+VIP2CARS is built on Laravel 12 and follows standard Laravel conventions, making it straightforward to extend with new features. This guide covers the essential steps for adding new functionality to the system.
+
+## Understanding the Architecture
+
+VIP2CARS uses a traditional MVC architecture with:
+
+- **Models** in `app/Models/` - Eloquent models for database entities
+- **Controllers** in `app/Http/Controllers/` - Request handlers and business logic
+- **Routes** in `routes/web.php` - URL routing definitions
+- **Migrations** in `database/migrations/` - Database schema versioning
+- **Seeders** in `database/seeders/` - Test data population
+
+The system currently manages two main entities: `Cliente` (Client) and `Vehiculo` (Vehicle) with a one-to-many relationship.
+
+## Adding a New Model
+
+<Steps>
+  <Step title="Create the Model">
+    Use Artisan to generate a new model. The `-m` flag creates a migration file automatically:
+
+    ```bash
+    php artisan make:model Servicio -m
+    ```
+
+    This creates:
+    - `app/Models/Servicio.php` - The model class
+    - `database/migrations/YYYY_MM_DD_HHMMSS_create_servicios_table.php` - The migration
+  </Step>
+
+  <Step title="Configure Model Properties">
+    Edit your model to define the table, primary key, and fillable attributes:
+
+    ```php app/Models/Servicio.php
+    <?php
+
+    namespace App\Models;
+
+    use Illuminate\Database\Eloquent\Model;
+
+    class Servicio extends Model
+    {
+        protected $table = 'servicios';
+        protected $primaryKey = 'id_servicio';
+        
+        protected $fillable = [
+            'descripcion',
+            'costo',
+            'fecha_servicio',
+            'id_vehiculo',
+        ];
+
+        // Define relationships
+        public function vehiculo()
+        {
+            return $this->belongsTo(Vehiculo::class, 'id_vehiculo', 'id_vehiculo');
+        }
+    }
+    ```
+
+    <Note>
+      VIP2CARS uses custom primary key names (`id_cliente`, `id_vehiculo`) instead of Laravel's default `id`. Follow this convention for consistency.
+    </Note>
+  </Step>
+
+  <Step title="Define Relationships">
+    If your model relates to existing models, add the inverse relationship. For example, in `Vehiculo.php`:
+
+    ```php app/Models/Vehiculo.php
+    public function servicios()
+    {
+        return $this->hasMany(Servicio::class, 'id_vehiculo', 'id_vehiculo');
+    }
+    ```
+  </Step>
+</Steps>
+
+## Creating Database Migrations
+
+Migrations define your database schema and allow version control of database changes.
+
+### Migration Structure
+
+Edit the generated migration file to define your table schema:
+
+```php database/migrations/2026_03_04_120000_create_servicios_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('servicios', function (Blueprint $table) {
+            $table->id('id_servicio');
+            $table->text('descripcion');
+            $table->decimal('costo', 10, 2);
+            $table->date('fecha_servicio');
+            $table->unsignedBigInteger('id_vehiculo');
+            $table->foreign('id_vehiculo')
+                  ->references('id_vehiculo')
+                  ->on('vehiculos')
+                  ->onDelete('cascade');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('servicios');
+    }
+};
+```
+
+<Tip>
+  Use `onDelete('cascade')` for foreign keys to automatically delete related records when the parent is deleted, maintaining referential integrity.
+</Tip>
+
+### Running Migrations
+
+```bash
+# Run all pending migrations
+php artisan migrate
+
+# Rollback the last batch
+php artisan migrate:rollback
+
+# Reset and re-run all migrations
+php artisan migrate:fresh
+
+# Reset and seed the database
+php artisan migrate:fresh --seed
+```
+
+## Building Controllers
+
+Controllers handle HTTP requests and contain your business logic.
+
+<Steps>
+  <Step title="Generate the Controller">
+    Use the `--resource` flag to create a controller with all CRUD methods:
+
+    ```bash
+    php artisan make:controller ServicioController --resource
+    ```
+  </Step>
+
+  <Step title="Implement Controller Methods">
+    VIP2CARS follows a standard CRUD pattern. Here's an example based on the existing `ClienteController`:
+
+    ```php app/Http/Controllers/ServicioController.php
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use Illuminate\Http\Request;
+    use App\Models\Servicio;
+    use App\Models\Vehiculo;
+
+    class ServicioController extends Controller
+    {
+        public function index()
+        {
+            $servicios = Servicio::with('vehiculo')->get();
+            return view('servicios.index', compact('servicios'));
+        }
+
+        public function create()
+        {
+            $vehiculos = Vehiculo::all();
+            return view('servicios.create', compact('vehiculos'));
+        }
+
+        public function store(Request $request)
+        {
+            $data = $request->validate([
+                'descripcion' => 'required|string',
+                'costo' => 'required|numeric|min:0',
+                'fecha_servicio' => 'required|date',
+                'id_vehiculo' => 'required|exists:vehiculos,id_vehiculo',
+            ]);
+
+            Servicio::create($data);
+
+            return redirect()
+                ->route('servicios.index')
+                ->with('success', 'Servicio creado correctamente.');
+        }
+
+        public function show(string $id)
+        {
+            $servicio = Servicio::with('vehiculo')->findOrFail($id);
+            return view('servicios.show', compact('servicio'));
+        }
+
+        public function edit(string $id)
+        {
+            $servicio = Servicio::findOrFail($id);
+            $vehiculos = Vehiculo::all();
+            return view('servicios.edit', compact('servicio', 'vehiculos'));
+        }
+
+        public function update(Request $request, string $id)
+        {
+            $servicio = Servicio::findOrFail($id);
+            
+            $data = $request->validate([
+                'descripcion' => 'required|string',
+                'costo' => 'required|numeric|min:0',
+                'fecha_servicio' => 'required|date',
+                'id_vehiculo' => 'required|exists:vehiculos,id_vehiculo',
+            ]);
+
+            $servicio->update($data);
+
+            return redirect()
+                ->route('servicios.index')
+                ->with('success', 'Servicio actualizado correctamente.');
+        }
+
+        public function destroy(string $id)
+        {
+            $servicio = Servicio::findOrFail($id);
+            $servicio->delete();
+
+            return redirect()
+                ->route('servicios.index')
+                ->with('success', 'Servicio eliminado correctamente.');
+        }
+    }
+    ```
+  </Step>
+
+  <Step title="Add Validation Rules">
+    Always validate user input in your controller methods. VIP2CARS uses inline validation with the `validate()` method.
+
+    <Accordion title="Common Validation Rules">
+      - `required` - Field must be present
+      - `string` - Must be a string
+      - `numeric` - Must be numeric
+      - `email` - Must be a valid email
+      - `unique:table,column` - Must be unique in the database
+      - `exists:table,column` - Must exist in another table (foreign key)
+      - `max:value` - Maximum length/value
+      - `min:value` - Minimum length/value
+      - `date` - Must be a valid date
+      - `digits:value` - Must have exact number of digits
+    </Accordion>
+  </Step>
+</Steps>
+
+## Registering Routes
+
+Routes connect URLs to controller methods. VIP2CARS uses resource routing for CRUD operations.
+
+### Adding Resource Routes
+
+Edit `routes/web.php` to register your new controller:
+
+```php routes/web.php
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\VehiculoController;
+use App\Http\Controllers\ServicioController; // Add this
+
+Route::view('/', 'welcome')->name('home');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::resource('clientes', ClienteController::class);
+    Route::resource('vehiculos', VehiculoController::class);
+    Route::resource('servicios', ServicioController::class); // Add this
+});
+
+require __DIR__.'/settings.php';
+```
+
+<Note>
+  All main routes in VIP2CARS are protected by `auth` and `verified` middleware, ensuring only authenticated users can access them.
+</Note>
+
+### Resource Route Actions
+
+The `resource()` method automatically creates these routes:
+
+| HTTP Method | URI | Action | Route Name |
+|------------|-----|--------|------------|
+| GET | `/servicios` | index | servicios.index |
+| GET | `/servicios/create` | create | servicios.create |
+| POST | `/servicios` | store | servicios.store |
+| GET | `/servicios/{id}` | show | servicios.show |
+| GET | `/servicios/{id}/edit` | edit | servicios.edit |
+| PUT/PATCH | `/servicios/{id}` | update | servicios.update |
+| DELETE | `/servicios/{id}` | destroy | servicios.destroy |
+
+### View Available Routes
+
+List all registered routes:
+
+```bash
+php artisan route:list
+
+# Filter by name
+php artisan route:list --name=servicios
+```
+
+## Creating Seeders
+
+Seeders populate your database with test data.
+
+<Steps>
+  <Step title="Generate a Seeder">
+    ```bash
+    php artisan make:seeder ServicioSeeder
+    ```
+  </Step>
+
+  <Step title="Define Seed Data">
+    Following the pattern from `ClienteSeeder`:
+
+    ```php database/seeders/ServicioSeeder.php
+    <?php
+
+    namespace Database\Seeders;
+
+    use Illuminate\Database\Seeder;
+    use App\Models\Servicio;
+    use App\Models\Vehiculo;
+
+    class ServicioSeeder extends Seeder
+    {
+        public function run(): void
+        {
+            $vehiculo = Vehiculo::first();
+
+            if ($vehiculo) {
+                Servicio::create([
+                    'descripcion' => 'Cambio de aceite y filtros',
+                    'costo' => 150.00,
+                    'fecha_servicio' => now()->subDays(30),
+                    'id_vehiculo' => $vehiculo->id_vehiculo,
+                ]);
+
+                Servicio::create([
+                    'descripcion' => 'Alineación y balanceo',
+                    'costo' => 80.00,
+                    'fecha_servicio' => now()->subDays(15),
+                    'id_vehiculo' => $vehiculo->id_vehiculo,
+                ]);
+            }
+        }
+    }
+    ```
+  </Step>
+
+  <Step title="Register in DatabaseSeeder">
+    Add your seeder to `database/seeders/DatabaseSeeder.php`:
+
+    ```php database/seeders/DatabaseSeeder.php
+    public function run(): void
+    {
+        $this->call([
+            ClienteSeeder::class,
+            VehiculoSeeder::class,
+            ServicioSeeder::class, // Add this
+        ]);
+    }
+    ```
+  </Step>
+
+  <Step title="Run Seeders">
+    ```bash
+    # Run all seeders
+    php artisan db:seed
+
+    # Run a specific seeder
+    php artisan db:seed --class=ServicioSeeder
+    ```
+  </Step>
+</Steps>
+
+## Using Factories for Testing
+
+Factories generate fake data for testing. VIP2CARS includes a `UserFactory` example.
+
+### Creating a Factory
+
+```bash
+php artisan make:factory ServicioFactory --model=Servicio
+```
+
+```php database/factories/ServicioFactory.php
+<?php
+
+namespace Database\Factories;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Vehiculo;
+
+class ServicioFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'descripcion' => fake()->sentence(),
+            'costo' => fake()->randomFloat(2, 50, 500),
+            'fecha_servicio' => fake()->dateTimeBetween('-1 year', 'now'),
+            'id_vehiculo' => Vehiculo::factory(),
+        ];
+    }
+}
+```
+
+### Using Factories in Tests
+
+```php
+// Create a single record
+$servicio = Servicio::factory()->create();
+
+// Create multiple records
+$servicios = Servicio::factory()->count(10)->create();
+
+// Make without saving to database
+$servicio = Servicio::factory()->make();
+```
+
+## Best Practices
+
+<Note>
+  **Follow VIP2CARS Conventions:**
+  
+  - Use custom primary keys following the pattern `id_{table_name}` (e.g., `id_servicio`)
+  - Always use `fillable` to protect against mass assignment vulnerabilities
+  - Implement `onDelete('cascade')` for foreign keys to maintain data integrity
+  - Protect routes with `auth` and `verified` middleware
+  - Use Laravel's validation for all user input
+  - Return to index with success messages after CRUD operations
+  - Use eager loading (`with()`) to prevent N+1 query problems
+</Note>
+
+<Tip>
+  **Development Workflow:**
+  
+  1. Create model with migration: `php artisan make:model Name -m`
+  2. Define migration schema and relationships
+  3. Run migration: `php artisan migrate`
+  4. Create controller: `php artisan make:controller NameController --resource`
+  5. Implement controller methods with validation
+  6. Register routes in `routes/web.php`
+  7. Create seeder for test data: `php artisan make:seeder NameSeeder`
+  8. Create factory for testing: `php artisan make:factory NameFactory`
+  9. Build views using Livewire Flux components
+  10. Test your implementation
+</Tip>
+
+## Common Artisan Commands
+
+```bash
+# Generate files
+php artisan make:model Name -mcf      # Model, migration, controller, factory
+php artisan make:controller Name --resource
+php artisan make:migration create_table_name
+php artisan make:seeder NameSeeder
+php artisan make:factory NameFactory
+
+# Database operations
+php artisan migrate
+php artisan migrate:rollback
+php artisan migrate:fresh --seed
+php artisan db:seed
+
+# Debugging
+php artisan route:list
+php artisan tinker                    # Interactive shell
+php artisan config:clear
+php artisan cache:clear
+```
+
+## Next Steps
+
+After extending VIP2CARS with new functionality:
+
+1. Create views for your new resource using Livewire Flux components
+2. Add navigation links in your layout files
+3. Write tests to ensure everything works correctly
+4. Update API documentation if exposing endpoints
+5. Consider adding policies for authorization
+
+For more information on testing your extensions, see the [Testing Guide](/development/testing).

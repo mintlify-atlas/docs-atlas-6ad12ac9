@@ -1,0 +1,219 @@
+---
+title: System Requirements
+description: Hardware and software requirements for running VIP2CARS
+---
+
+Before installing VIP2CARS, ensure your system meets the following requirements.
+
+## Server Requirements
+
+### PHP
+
+VIP2CARS requires **PHP 8.2 or higher**.
+
+<Note>
+PHP 8.2+ is required as specified in the `composer.json` file. Ensure your server has this version or newer installed.
+</Note>
+
+### Required PHP Extensions
+
+The following PHP extensions are required by Laravel 12 and the application dependencies:
+
+- BCMath PHP Extension
+- Ctype PHP Extension
+- cURL PHP Extension
+- DOM PHP Extension
+- Fileinfo PHP Extension
+- JSON PHP Extension
+- Mbstring PHP Extension
+- OpenSSL PHP Extension
+- PCRE PHP Extension
+- PDO PHP Extension
+- PDO MySQL Extension (for MySQL database)
+- Tokenizer PHP Extension
+- XML PHP Extension
+
+### Composer
+
+Composer is required to install PHP dependencies. Download from [getcomposer.org](https://getcomposer.org/).
+
+### Node.js and npm
+
+Node.js and npm are required to compile frontend assets.
+
+<Note>
+The application uses Vite 7 for asset compilation, which requires Node.js 18 or higher.
+</Note>
+
+## Database Requirements
+
+VIP2CARS supports multiple database systems:
+
+### Primary Database Options
+
+<Accordion title="MySQL">
+**Recommended for production**
+
+- MySQL 8.0 or higher
+- Default port: 3306
+- Charset: utf8mb4
+- Collation: utf8mb4_unicode_ci
+
+MySQL is the recommended database for VIP2CARS in production environments.
+</Accordion>
+
+<Accordion title="MariaDB">
+**Alternative to MySQL**
+
+- MariaDB 10.3 or higher
+- Default port: 3306
+- Charset: utf8mb4
+- Collation: utf8mb4_unicode_ci
+
+MariaDB is fully compatible and can be used as a drop-in replacement for MySQL.
+</Accordion>
+
+<Accordion title="SQLite">
+**Development only**
+
+- SQLite 3.8.8 or higher
+- No server required
+- Single file database
+
+<Warning>
+SQLite is configured as the default for development but is **not recommended for production** use.
+</Warning>
+</Accordion>
+
+### Optional: Redis
+
+Redis can be used for caching, session storage, and queue management:
+
+- Redis 5.0 or higher
+- Default port: 6379
+- PHP Redis extension recommended (phpredis)
+
+## Key Dependencies
+
+### Backend (PHP)
+
+Extracted from `composer.json`:
+
+```json
+{
+  "php": "^8.2",
+  "laravel/framework": "^12.0",
+  "laravel/fortify": "^1.30",
+  "laravel/tinker": "^2.10.1",
+  "livewire/livewire": "^4.0",
+  "livewire/flux": "^2.9.0",
+  "livewire/blaze": "^1.0"
+}
+```
+
+### Frontend (JavaScript)
+
+Extracted from `package.json`:
+
+```json
+{
+  "vite": "^7.0.4",
+  "tailwindcss": "^4.0.7",
+  "@tailwindcss/vite": "^4.1.11",
+  "laravel-vite-plugin": "^2.0",
+  "axios": "^1.7.4",
+  "autoprefixer": "^10.4.20"
+}
+```
+
+## System Resources
+
+### Minimum Requirements
+
+- **CPU**: 1 core
+- **RAM**: 512 MB
+- **Disk Space**: 500 MB (for application files and database)
+
+### Recommended for Production
+
+- **CPU**: 2+ cores
+- **RAM**: 2 GB+
+- **Disk Space**: 5 GB+ (depending on data storage needs)
+- **SSL Certificate**: Required for HTTPS (recommended)
+
+## Development Tools (Optional)
+
+<Accordion title="Laravel Sail">
+Laravel Sail provides a Docker-based development environment:
+
+```bash
+composer require laravel/sail --dev
+```
+
+Sail is included in the `require-dev` section (version ^1.41).
+</Accordion>
+
+<Accordion title="Laravel Pint">
+Code style fixer based on PHP-CS-Fixer:
+
+```bash
+composer require laravel/pint --dev
+```
+
+Pint is included (version ^1.24) for maintaining code quality.
+</Accordion>
+
+<Accordion title="Pest PHP">
+Testing framework for running application tests:
+
+```bash
+composer require pestphp/pest --dev
+```
+
+Pest (version ^3.8) is included for testing.
+</Accordion>
+
+## Verification
+
+After installation, verify your environment meets all requirements:
+
+<Steps>
+  <Step title="Check PHP version">
+    ```bash
+    php -v
+    ```
+    Ensure output shows PHP 8.2 or higher.
+  </Step>
+  
+  <Step title="Check PHP extensions">
+    ```bash
+    php -m
+    ```
+    Verify all required extensions are listed.
+  </Step>
+  
+  <Step title="Check Composer">
+    ```bash
+    composer --version
+    ```
+  </Step>
+  
+  <Step title="Check Node.js">
+    ```bash
+    node -v
+    npm -v
+    ```
+    Ensure Node.js 18+ is installed.
+  </Step>
+  
+  <Step title="Check database connection">
+    Test your MySQL/MariaDB connection:
+    ```bash
+    mysql -u root -p
+    ```
+  </Step>
+</Steps>
+
+## Next Steps
+
+Once your system meets all requirements, proceed to [Configuration](/deployment/configuration) to set up your environment.

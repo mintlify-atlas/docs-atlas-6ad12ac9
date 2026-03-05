@@ -1,0 +1,470 @@
+---
+title: Installation Guide
+description: Complete step-by-step instructions to install and configure VIP2CARS on your system
+---
+
+# Installation Guide
+
+This guide will walk you through the complete installation process for VIP2CARS, from cloning the repository to running the application locally.
+
+## System Requirements
+
+Before beginning the installation, verify that your system meets these requirements:
+
+### Required Software
+
+<Info>
+Ensure all required software is installed and accessible from your command line before proceeding.
+</Info>
+
+- **PHP** >= 8.2
+  - Extensions: OpenSSL, PDO, Mbstring, Tokenizer, XML, Ctype, JSON, BCMath
+- **Composer** (latest version)
+- **Node.js** and **npm** (LTS version recommended)
+- **MySQL** >= 5.7 or **MariaDB** >= 10.3
+- **Git**
+
+### Optional Tools
+
+- **XAMPP** - Provides Apache, MySQL, and PHP in one package (Windows/Mac/Linux)
+- **Laragon** - Alternative to XAMPP (Windows)
+- **Docker** - For containerized deployment
+
+<Tip>
+If you're on Windows, XAMPP is the easiest way to get MySQL/MariaDB and PHP running quickly.
+</Tip>
+
+## Installation Steps
+
+Follow these steps carefully to install VIP2CARS on your system.
+
+<Steps>
+
+### Clone the Repository
+
+First, clone the VIP2CARS repository to your local machine:
+
+```bash
+git clone https://github.com/farceque99/AndersonFarcequeFlores.git
+cd AndersonFarcequeFlores
+```
+
+This creates a new directory with all the source code.
+
+### Install Dependencies
+
+Install both PHP (backend) and JavaScript (frontend) dependencies:
+
+<CodeGroup>
+
+```bash Backend Dependencies
+composer install
+```
+
+```bash Frontend Dependencies
+npm install
+```
+
+</CodeGroup>
+
+<Note>
+The `composer install` command may take several minutes as it downloads all PHP packages. The `npm install` command will download Node.js packages for asset compilation.
+</Note>
+
+**Dependency Versions Installed:**
+
+```json composer.json
+{
+  "require": {
+    "php": "^8.2",
+    "laravel/framework": "^12.0",
+    "laravel/fortify": "^1.30",
+    "laravel/tinker": "^2.10.1",
+    "livewire/blaze": "^1.0",
+    "livewire/flux": "^2.9.0",
+    "livewire/livewire": "^4.0"
+  }
+}
+```
+
+```json package.json
+{
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.11",
+    "autoprefixer": "^10.4.20",
+    "axios": "^1.7.4",
+    "concurrently": "^9.0.1",
+    "laravel-vite-plugin": "^2.0",
+    "tailwindcss": "^4.0.7",
+    "vite": "^7.0.4"
+  }
+}
+```
+
+### Configure Environment
+
+Copy the example environment file and generate an application key:
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+The `key:generate` command creates a secure encryption key in your `.env` file.
+
+<Warning>
+Never commit your `.env` file to version control. It contains sensitive configuration data.
+</Warning>
+
+### Set Up the Database
+
+Create a new MySQL database for VIP2CARS.
+
+#### Using phpMyAdmin:
+
+1. Open phpMyAdmin in your browser (usually `http://localhost/phpmyadmin`)
+2. Click "New" in the left sidebar
+3. Enter database name: `vip2cars`
+4. Select collation: `utf8mb4_unicode_ci`
+5. Click "Create"
+
+#### Using MySQL Command Line:
+
+```bash
+mysql -u root -p
+```
+
+```sql
+CREATE DATABASE vip2cars CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+EXIT;
+```
+
+### Configure Database Connection
+
+Open the `.env` file in your text editor and configure the database settings:
+
+```env .env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=vip2cars
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+<Info>
+**Default XAMPP credentials:**
+- Username: `root`
+- Password: (leave empty)
+
+If you're using a different setup, adjust the credentials accordingly.
+</Info>
+
+**Alternative: SQLite Configuration**
+
+For development, you can use SQLite instead of MySQL:
+
+```env .env
+DB_CONNECTION=sqlite
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=vip2cars
+# DB_USERNAME=root
+# DB_PASSWORD=
+```
+
+Then create the database file:
+
+```bash
+touch database/database.sqlite
+```
+
+### Run Migrations and Seeders
+
+Create the database tables and populate them with sample data:
+
+```bash
+php artisan migrate --seed
+```
+
+This command performs two actions:
+
+1. **Migrations**: Creates all necessary database tables
+   - `users` - User accounts
+   - `clientes` - Client information
+   - `vehiculos` - Vehicle records
+   - Additional system tables (cache, jobs, sessions)
+
+2. **Seeders**: Populates tables with test data
+   - `ClienteSeeder` - Sample client records
+   - `VehiculoSeeder` - Sample vehicle records linked to clients
+
+<Tip>
+If you need to reset the database and start fresh, use:
+```bash
+php artisan migrate:fresh --seed
+```
+This drops all tables and recreates them with fresh data.
+</Tip>
+
+**Database Schema Created:**
+
+```sql Clientes Table
+CREATE TABLE clientes (
+  id_cliente BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  nombres VARCHAR(255) NOT NULL,
+  apellidos VARCHAR(255) NOT NULL,
+  nro_documento VARCHAR(255) UNIQUE NOT NULL,
+  correo VARCHAR(255) UNIQUE NOT NULL,
+  telefono VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL
+);
+```
+
+```sql Vehiculos Table
+CREATE TABLE vehiculos (
+  id_vehiculo BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  placa VARCHAR(255) UNIQUE NOT NULL,
+  marca VARCHAR(255) NOT NULL,
+  modelo VARCHAR(255) NOT NULL,
+  anio_fabricacion INT NOT NULL,
+  id_cliente BIGINT UNSIGNED NOT NULL,
+  created_at TIMESTAMP NULL,
+  updated_at TIMESTAMP NULL,
+  FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente) ON DELETE CASCADE
+);
+```
+
+### Start the Application
+
+Run both the Laravel development server and the Vite asset compiler.
+
+**Option 1: Using Two Terminals (Recommended for Development)**
+
+Open two separate terminal windows:
+
+<CodeGroup>
+
+```bash Terminal 1 - Laravel Server
+php artisan serve
+```
+
+```bash Terminal 2 - Vite Dev Server
+npm run dev
+```
+
+</CodeGroup>
+
+**Terminal 1** starts the PHP development server on `http://127.0.0.1:8000`
+
+**Terminal 2** starts Vite for hot module replacement and asset compilation
+
+<Note>
+Keep both terminals running while you develop. Vite watches for file changes and automatically recompiles your assets.
+</Note>
+
+**Option 2: Using Composer Script (Single Terminal)**
+
+Alternatively, use the built-in composer script that runs all services concurrently:
+
+```bash
+composer run dev
+```
+
+This starts:
+- PHP development server
+- Queue listener
+- Vite dev server
+
+All in one terminal with color-coded output.
+
+</Steps>
+
+## Accessing the Application
+
+Once the servers are running, you can access VIP2CARS:
+
+- **Homepage**: http://127.0.0.1:8000
+- **Dashboard**: http://127.0.0.1:8000/dashboard (requires authentication)
+- **Register**: http://127.0.0.1:8000/register
+- **Login**: http://127.0.0.1:8000/login
+
+<Info>
+The first time you visit, you'll need to register a user account to access the dashboard and management features.
+</Info>
+
+## Post-Installation Configuration
+
+### Application Name
+
+Customize your application name in the `.env` file:
+
+```env .env
+APP_NAME="VIP2CARS"
+```
+
+### Mail Configuration
+
+For password resets and email verification, configure mail settings:
+
+```env .env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_USERNAME=your_username
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS="noreply@vip2cars.local"
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+<Tip>
+For development, use [Mailtrap](https://mailtrap.io) or set `MAIL_MAILER=log` to log emails to `storage/logs/laravel.log` instead of sending them.
+</Tip>
+
+### Queue Configuration
+
+VIP2CARS uses database queues for background jobs. To process queued jobs:
+
+```bash
+php artisan queue:work
+```
+
+For development, you can run the queue listener included in `composer run dev`.
+
+## Troubleshooting
+
+### Common Issues
+
+**Issue: "Class 'ZipArchive' not found"**
+
+<Warning>
+Solution: Enable the `php_zip` extension in your `php.ini` file.
+</Warning>
+
+**Issue: "SQLSTATE[HY000] [2002] Connection refused"**
+
+Solution: Ensure MySQL/MariaDB is running. If using XAMPP, start the MySQL service from the control panel.
+
+**Issue: "Vite manifest not found"**
+
+Solution: Make sure `npm run dev` is running. If you've stopped it, restart with:
+
+```bash
+npm run dev
+```
+
+**Issue: "Permission denied" on storage directory**
+
+Solution: Set proper permissions on storage and cache directories:
+
+```bash
+chmod -R 775 storage bootstrap/cache
+```
+
+**Issue: Composer dependencies conflict**
+
+Solution: Clear composer cache and reinstall:
+
+```bash
+composer clear-cache
+rm -rf vendor composer.lock
+composer install
+```
+
+### Clearing Caches
+
+If you encounter unexpected behavior, clear all caches:
+
+```bash
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+```
+
+Or use the combined command:
+
+```bash
+php artisan optimize:clear
+```
+
+## Production Deployment
+
+For production environments, follow these additional steps:
+
+<Steps>
+
+### Build Assets for Production
+
+```bash
+npm run build
+```
+
+This creates optimized, minified assets in the `public/build` directory.
+
+### Optimize Laravel
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+### Set Environment to Production
+
+```env .env
+APP_ENV=production
+APP_DEBUG=false
+```
+
+<Warning>
+**CRITICAL**: Never deploy with `APP_DEBUG=true` in production. This exposes sensitive information.
+</Warning>
+
+### Configure Web Server
+
+Point your web server's document root to the `public` directory, not the application root.
+
+**Example Nginx Configuration:**
+
+```nginx
+server {
+    listen 80;
+    server_name vip2cars.local;
+    root /var/www/vip2cars/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+```
+
+</Steps>
+
+## Next Steps
+
+Now that VIP2CARS is installed, proceed to the [Quick Start Guide](/quickstart) to learn how to:
+
+- Register your first user account
+- Navigate the dashboard
+- Create and manage clients
+- Add vehicles to client records
+- Use the system's core features
+
+<Tip>
+Bookmark the dashboard URL for quick access: http://127.0.0.1:8000/dashboard
+</Tip>
